@@ -1,4 +1,3 @@
-import * as ImagePicker from 'expo-image-picker';
 import React, { useState } from 'react';
 import {
   Image,
@@ -27,6 +26,7 @@ import type {
   PeeVolume,
   StoolQuality,
 } from '@/types/domain';
+import { pickPhoto } from '@/utils/photo-picker';
 
 interface Props {
   event: DayEvent;
@@ -62,13 +62,10 @@ export function EventSheet({ event, feeds, catColor, onSave, onDelete, onClose }
   const canPhoto = type === 'poop' || type === 'pee';
   const unit = feeds.find((f) => f.id === feedId)?.unit ?? 'gram';
 
-  const pickPhoto = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      quality: 0.7,
-    });
-    if (result.canceled || !result.assets?.[0]) return;
-    const saved = await savePhotoAsset(result.assets[0].uri, event.id);
+  const pickPhotoAsset = async () => {
+    const uri = await pickPhoto();
+    if (!uri) return;
+    const saved = await savePhotoAsset(uri, event.id);
     setPhotoUri(saved);
   };
 
@@ -294,7 +291,7 @@ export function EventSheet({ event, feeds, catColor, onSave, onDelete, onClose }
                   </View>
                 ) : (
                   <Pressable
-                    onPress={pickPhoto}
+                    onPress={pickPhotoAsset}
                     style={{
                       paddingHorizontal: 12,
                       paddingVertical: 8,

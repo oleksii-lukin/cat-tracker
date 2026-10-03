@@ -1,4 +1,3 @@
-import * as ImagePicker from 'expo-image-picker';
 import { useSQLiteContext } from 'expo-sqlite';
 import React, { useState } from 'react';
 import {
@@ -24,6 +23,7 @@ import { createEvent, createNote, savePhotoAsset } from '@/db/repositories';
 import type { Cat, EventType, Feed, PeeVolume, StoolQuality } from '@/types/domain';
 import { dayKey, formatTime } from '@/utils/dates';
 import { uuid } from '@/utils/id';
+import { pickPhoto } from '@/utils/photo-picker';
 
 interface Props {
   cat: Cat;
@@ -77,13 +77,10 @@ export function QuickAddPanel({ cat, feeds, onMutated }: Props) {
     });
   };
 
-  const pickPhoto = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      quality: 0.7,
-    });
-    if (result.canceled || !result.assets?.[0]) return;
-    const saved = await savePhotoAsset(result.assets[0].uri, uuid());
+  const pickPhotoAsset = async () => {
+    const uri = await pickPhoto();
+    if (!uri) return;
+    const saved = await savePhotoAsset(uri, uuid());
     setPhotoUri(saved);
   };
 
@@ -349,7 +346,7 @@ export function QuickAddPanel({ cat, feeds, onMutated }: Props) {
                 </View>
               ) : (
                 <Pressable
-                  onPress={pickPhoto}
+                  onPress={pickPhotoAsset}
                   style={{
                     paddingHorizontal: 10,
                     paddingVertical: 6,
