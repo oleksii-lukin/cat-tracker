@@ -25,10 +25,17 @@
     },
     "plugins": [
       "expo-router",
+      "expo-sqlite",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Приложение использует фото, чтобы прикреплять снимки стула и других наблюдений к событиям."
+        }
+      ],
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
+          "backgroundColor": "#FFF8F3",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
