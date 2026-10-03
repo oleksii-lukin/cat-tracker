@@ -1,56 +1,39 @@
-# Welcome to your Expo app 👋
+# Cat Tracker
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Локальный дневник пищевого поведения и туалета кошек на React Native (Expo). Владелец за 1–2 тапа фиксирует, когда и сколько кошка ела, писала и какала — чтобы отслеживать динамику (запоры, отравления, стресс) и показать врачу точную историю вместо «по-моему, ест мало».
 
-## Get started
+## Цели
 
-1. Install dependencies
+1. **Фиксация за 1–2 клика** — без клавиатуры в основном потоке: кнопка действия + тапы по преднастроенным характеристикам.
+2. **Самостоятельное обнаружение проблем** — лента дней и статистика позволяют увидеть изменения в динамике самому.
+3. **Выгрузка врачу** — структурированные поля (стул, объём, корм + количество) и хронология с деталями.
+4. Фаза 2 (вне текущей версии): синхронизация между устройствами, ИИ-подсказки «когда что-то не так», хранение медицинских документов.
 
-   ```bash
-   npm install
-   ```
+## Функции фазы 1
 
-2. Start the app
+- **Коты**: несколько профилей (имя, пол, дата рождения, цвет), вес с историей изменений; переключение свайпом/чипсами, акцент интерфейса в цвете кота.
+- **3 действия** с характеристиками: поела (корм из пресетов + количество степперами), пописяла (объём: мало/нормально/много), покакала (стул: норма/тугой-сухой/жидкий/необычный); фото опционально.
+- **Заметки** — неограниченное количество свободных записей с опциональным временем, карточками в ленте дня.
+- **События**: дата обязательна, время опционально; флаг «неточное» (сомнение в дне/времени/коте); кнопка «Повторить».
+- **Дневник**: лента дней с догрузкой истории, редактирование/удаление в один тап.
+- **Статистика**: неделя/месяц, счётчики событий по дням, переход в день.
+- **Корма**: пресеты из коробки (мокрый — ложки, сухой — граммы), свои добавляются/заменяются.
 
-   ```bash
-   npx expo start
-   ```
+Явно **не** в фазе 1: синхронизация, ИИ, меддокументы, тёмная тема, i18n, будущие события-планы.
 
-In the output, you'll find options to open the app in a
+## Стек и запуск
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+- Expo SDK 57, React Native 0.86, Expo Router (табы: Дневник / Статистика / Настройки), NativeWind + gluestack-ui v5.
+- Хранение — **локальное**, `expo-sqlite`; схема сразу sync-ready (UUID, `updated_at`, мягкие удаления) — синхронизация будет добавлена позже без миграций данных.
+- Фото — `expo-image-picker`, файлы в documents-каталоге.
 
 ```bash
-npm run reset-project
+npx expo install   # зависимости (expo-sqlite, expo-image-picker, expo-file-system и др.)
+npx expo start     # dev-сервер
+eas build          # сборка в облаке (EAS)
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Документация
 
-### Other setup steps
-
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- [GLOSSARY.md](./GLOSSARY.md) — доменные термины (Кот, Действие, Событие, Заметка…).
+- [docs/adr/](./docs/adr/) — ключевые архитектурные и продуктовые решения (локальное хранение, три действия, отсутствие статусов дней, алиас `@`).
