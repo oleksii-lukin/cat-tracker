@@ -4,10 +4,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { ACTION_META } from '@/constants/design';
-import { getDayCounts } from '@/db/repositories';
+import { ACTION_META, FEED_UNIT_LABELS, PEE_VOLUME_LABELS, STOOL_LABELS } from '@/constants/design';
+import { getDaySummaries } from '@/db/repositories';
 import { useApp } from '@/context/app-context';
-import type { DayCounts } from '@/types/domain';
+import type { DaySummary, FeedKind } from '@/types/domain';
 import { addDays, formatDayRu, todayKey, weekdayShort } from '@/utils/dates';
 
 const RANGES: { key: 'week' | 'month'; label: string; days: number }[] = [
@@ -15,33 +15,93 @@ const RANGES: { key: 'week' | 'month'; label: string; days: number }[] = [
   { key: 'month', label: 'Месяц', days: 28 },
 ];
 
+const FEED_KIND_LABELS: Record<FeedKind, string> = { dry: 'Сухой', wet: 'Мокрый' };
+
+function pluralTimes(n: number): string {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return `${n} раз`;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return `${n} раза`;
+  return `${n} раз`;
+}
+
+function uniqueLabels(values: string[], labels: Record<string, string>): string {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const v of values) {
+    const label = (labels[v] ?? v).toLowerCase();
+    if (!seen.has(label)) {
+      seen.add(label);
+      out.push(label);
+    }
+  }
+  return out.join(', ');
+}
+
+function formatFood(summary: DaySummary): string | null {
+  if (summary.foodEvents === 0) return null;
+  const parts = summary.foodByKind.map((b) => {
+    const kindLabel = FEED_KIND_LABELS[b.kind] ?? b.kind;
+    if (b.totalAmount > 0) {
+      return `${kindLabel} ${b.totalAmount} ${FEED_UNIT_LABELS[b.unit] ?? ''}`.trim();
+    }
+    return `${kindLabel} без объёма`;
+  });
+  return `${ACTION_META.food.label}: ${parts.join(' · ')}`;
+}
+
+function formatPee(summary: DaySummary): string | null {
+  if (summary.peeCount === 0) return null;
+  const volumes = summary.peeVolumes.length
+    ? ` (${uniqueLabels(summary.peeVolumes, PEE_VOLUME_LABELS)})`
+    : '';
+  return `${ACTION_META.pee.label} ${pluralTimes(summary.peeCount)}${volumes}`;
+}
+
+function formatPoop(summary: DaySummary): string | null {
+  if (summary.poopCount === 0) return null;
+  const qualities = summary.poopQualities.length
+    ? `: ${uniqueLabels(summary.poopQualities, STOOL_LABELS)}`
+    : '';
+  return `${ACTION_META.poop.label} ${pluralTimes(summary.poopCount)}${qualities}`;
+}
+
+const EMPTY_SUMMARY: DaySummary = {
+  poopCount: 0,
+  poopQualities: [],
+  peeCount: 0,
+  peeVolumes: [],
+  foodByKind: [],
+  foodEvents: 0,
+};
+
 export default function StatsScreen() {
   const db = useSQLiteContext();
-  const { currentCat, setFocusDay } = useApp();
+  const { currentCat, setFocusDay, revision } = useApp();
   const [rangeKey, setRangeKey] = useState<'week' | 'month'>('week');
-  const [counts, setCounts] = useState<Record<string, DayCounts>>({});
+  const [summaries, setSummaries] = useState<Record<string, DaySummary>>({});
   const [loading, setLoading] = useState(false);
 
   const days = useMemo(() => {
     const today = todayKey();
     const n = RANGES.find((r) => r.key === rangeKey)?.days ?? 7;
-    return Array.from({ length: n }, (_, i) => addDays(today, -(n - 1 - i)));
+    return Array.from({ length: n }, (_, i) => addDays(today, -i));
   }, [rangeKey]);
 
   const load = useCallback(async () => {
     if (!currentCat) return;
     setLoading(true);
     try {
-      const result = await getDayCounts(db, currentCat.id, days[0], days[days.length - 1]);
-      setCounts(result);
+      const result = await getDaySummaries(db, currentCat.id, days[days.length - 1], days[0]);
+      setSummaries(result);
     } finally {
       setLoading(false);
     }
-  }, [db, currentCat, days]);
+  }, [db, currentCat, days, revision]);
 
   useEffect(() => {
     load();
-  }, [load, currentCat?.id]);
+  }, [load, currentCat?.id, revision]);
 
   if (!currentCat) {
     return (
@@ -85,24 +145,14 @@ export default function StatsScreen() {
           </View>
         </View>
 
-        <View style={{ flexDirection: 'row', gap: 6, marginBottom: 10, paddingHorizontal: 2 }}>
-          {[
-            { label: 'Какал', color: ACTION_META.poop.main },
-            { label: 'Писал', color: ACTION_META.pee.main },
-            { label: 'Ел', color: ACTION_META.food.main },
-          ].map((l) => (
-            <View key={l.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: l.color }} />
-              <Text style={{ fontSize: 11, fontWeight: '600', color: '#56423C' }}>{l.label}</Text>
-            </View>
-          ))}
-        </View>
-
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        <View style={{ flexDirection: 'column', gap: 8 }}>
           {days.map((day) => {
-            const c = counts[day] ?? { poop: 0, pee: 0, food: 0 };
-            const total = c.poop + c.pee + c.food;
+            const s = summaries[day] ?? EMPTY_SUMMARY;
             const isToday = day === todayKey();
+            const foodLine = formatFood(s);
+            const peeLine = formatPee(s);
+            const poopLine = formatPoop(s);
+            const isEmpty = !foodLine && !peeLine && !poopLine;
             return (
               <Pressable
                 key={day}
@@ -111,46 +161,43 @@ export default function StatsScreen() {
                   router.push('/');
                 }}
                 style={{
-                  width: '48%',
                   backgroundColor: '#FFFFFF',
                   borderRadius: 14,
-                  padding: 10,
+                  padding: 12,
                   borderWidth: isToday ? 2 : 1,
                   borderColor: isToday ? currentCat.color : '#DDC0B7',
                 }}
               >
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#1F1B15' }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: isEmpty ? 0 : 8 }}>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#1F1B15' }}>
                     {weekdayShort(day)}, {formatDayRu(day)}
                   </Text>
-                  {total === 0 ? (
-                    <Text style={{ fontSize: 10, color: '#A49C93' }}>не отсл.</Text>
+                  {isEmpty ? (
+                    <Text style={{ fontSize: 11, color: '#A49C93' }}>Нет записей</Text>
                   ) : null}
                 </View>
-                <View style={{ flexDirection: 'row', gap: 8 }}>
-                  {(
-                    [
-                      { key: 'poop', value: c.poop, color: ACTION_META.poop.main },
-                      { key: 'pee', value: c.pee, color: ACTION_META.pee.main },
-                      { key: 'food', value: c.food, color: ACTION_META.food.main },
-                    ] as const
-                  ).map((item) => (
-                    <View key={item.key} style={{ alignItems: 'center', flex: 1 }}>
-                      <Text style={{ fontSize: 16, fontWeight: '800', color: item.color }}>
-                        {item.value}
-                      </Text>
-                      <View
-                        style={{
-                          width: '100%',
-                          height: 4,
-                          borderRadius: 2,
-                          backgroundColor: item.value > 0 ? item.color : '#F0E7DD',
-                          marginTop: 2,
-                        }}
-                      />
-                    </View>
-                  ))}
-                </View>
+                {isEmpty ? null : (
+                  <View style={{ flexDirection: 'column', gap: 4 }}>
+                    {peeLine ? (
+                      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6 }}>
+                        <Text style={{ fontSize: 13 }}>{ACTION_META.pee.emoji}</Text>
+                        <Text style={{ fontSize: 13, color: '#1F1B15', flex: 1 }}>{peeLine}</Text>
+                      </View>
+                    ) : null}
+                    {poopLine ? (
+                      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6 }}>
+                        <Text style={{ fontSize: 13 }}>{ACTION_META.poop.emoji}</Text>
+                        <Text style={{ fontSize: 13, color: '#1F1B15', flex: 1 }}>{poopLine}</Text>
+                      </View>
+                    ) : null}
+                    {foodLine ? (
+                      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6 }}>
+                        <Text style={{ fontSize: 13 }}>{ACTION_META.food.emoji}</Text>
+                        <Text style={{ fontSize: 13, color: '#1F1B15', flex: 1 }}>{foodLine}</Text>
+                      </View>
+                    ) : null}
+                  </View>
+                )}
               </Pressable>
             );
           })}

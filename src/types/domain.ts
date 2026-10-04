@@ -87,8 +87,11 @@ export interface EventInput {
   photoUri?: string | null;
 }
 
-export interface DayCounts {
-  poop: number;
-  pee: number;
-  food: number;
+export interface DaySummary {
+  poopCount: number;
+  poopQualities: StoolQuality[];
+  peeCount: number;
+  peeVolumes: PeeVolume[];
+  foodByKind: { kind: FeedKind; unit: FeedUnit; totalAmount: number; eventsWithoutAmount: number }[];
+  foodEvents: number;
 }

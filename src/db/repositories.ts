@@ -2,12 +2,16 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 
 import type {
   Cat,
-  DayCounts,
   DayEvent,
+  DaySummary,
   EventInput,
   Feed,
+  FeedKind,
+  FeedUnit,
   Note,
+  PeeVolume,
   Sex,
+  StoolQuality,
   WeightEntry,
 } from '@/types/domain';
 import { nowIso, uuid } from '@/utils/id';
@@ -451,27 +455,67 @@ export async function softDeleteNote(db: SQLiteDatabase, id: string): Promise<vo
 
 /* ---------- Stats ---------- */
 
-export async function getDayCounts(
+export async function getDaySummaries(
   db: SQLiteDatabase,
   catId: string,
   fromDay: string,
   toDay: string
-): Promise<Record<string, DayCounts>> {
-  const rows = await db.getAllAsync<{ event_date: string; type: string; cnt: number }>(
-    `SELECT event_date, type, COUNT(*) AS cnt
+): Promise<Record<string, DaySummary>> {
+  const events = await db.getAllAsync<{
+    event_date: string;
+    type: string;
+    stool_quality: string | null;
+    pee_volume: string | null;
+    feed_id: string | null;
+    amount: number | null;
+    meals_count: number | null;
+  }>(
+    `SELECT event_date, type, stool_quality, pee_volume, feed_id, amount, meals_count
      FROM events
-     WHERE cat_id = ? AND event_date >= ? AND event_date <= ? AND deleted_at IS NULL
-     GROUP BY event_date, type`,
+     WHERE cat_id = ? AND event_date >= ? AND event_date <= ? AND deleted_at IS NULL`,
     catId, fromDay, toDay
   );
-  const result: Record<string, DayCounts> = {};
-  for (const row of rows) {
-    if (!result[row.event_date]) {
-      result[row.event_date] = { poop: 0, pee: 0, food: 0 };
+  const feeds = await db.getAllAsync<{ id: string; kind: string; unit: string }>(
+    `SELECT id, kind, unit FROM feeds WHERE deleted_at IS NULL`
+  );
+  const feedMap = new Map(feeds.map((f) => [f.id, { kind: f.kind as FeedKind, unit: f.unit as FeedUnit }]));
+
+  const result: Record<string, DaySummary> = {};
+  const ensure = (day: string): DaySummary => {
+    if (!result[day]) {
+      result[day] = {
+        poopCount: 0,
+        poopQualities: [],
+        peeCount: 0,
+        peeVolumes: [],
+        foodByKind: [],
+        foodEvents: 0,
+      };
     }
-    if (row.type === 'poop') result[row.event_date].poop = row.cnt;
-    else if (row.type === 'pee') result[row.event_date].pee = row.cnt;
-    else if (row.type === 'food') result[row.event_date].food = row.cnt;
+    return result[day];
+  };
+
+  for (const row of events) {
+    const summary = ensure(row.event_date);
+    if (row.type === 'poop') {
+      summary.poopCount += 1;
+      if (row.stool_quality) summary.poopQualities.push(row.stool_quality as StoolQuality);
+    } else if (row.type === 'pee') {
+      summary.peeCount += 1;
+      if (row.pee_volume) summary.peeVolumes.push(row.pee_volume as PeeVolume);
+    } else if (row.type === 'food') {
+      summary.foodEvents += 1;
+      const feed = row.feed_id ? feedMap.get(row.feed_id) : null;
+      const kind = feed?.kind ?? 'dry';
+      const unit = feed?.unit ?? 'gram';
+      let bucket = summary.foodByKind.find((b) => b.kind === kind && b.unit === unit);
+      if (!bucket) {
+        bucket = { kind, unit, totalAmount: 0, eventsWithoutAmount: 0 };
+        summary.foodByKind.push(bucket);
+      }
+      if (row.amount != null) bucket.totalAmount += row.amount;
+      else bucket.eventsWithoutAmount += 1;
+    }
   }
   return result;
 }
