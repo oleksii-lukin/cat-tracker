@@ -3,9 +3,11 @@ import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CatChips } from '@/components/cat-chips';
+import { CoatFrame } from '@/components/coat-frame';
 import { JournalFeed } from '@/components/journal-feed';
 import { QuickAddPanel } from '@/components/quick-add-panel';
 import { useApp } from '@/context/app-context';
+import { getCoat } from '@/constants/coats';
 
 export default function JournalScreen() {
   const {
@@ -42,13 +44,15 @@ export default function JournalScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFF8F3' }} edges={['top']}>
+    <CoatFrame
+      coat={getCoat(currentCat.color)}
+      header={<CatChips cats={cats} currentCatId={currentCatId} onSelect={setCurrentCatId} />}
+    >
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: 32 }}
         keyboardShouldPersistTaps="handled"
       >
-        <CatChips cats={cats} currentCatId={currentCatId} onSelect={setCurrentCatId} />
         <QuickAddPanel cat={currentCat} feeds={feeds} onMutated={onMutated} />
         <JournalFeed
           key={currentCat.id}
@@ -59,6 +63,6 @@ export default function JournalScreen() {
           onFocusDayHandled={onFocusDayHandled}
         />
       </ScrollView>
-    </SafeAreaView>
+    </CoatFrame>
   );
 }

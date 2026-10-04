@@ -9,9 +9,11 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { CAT_COLORS } from '@/constants/design';
+import { CatAvatar } from '@/components/cat-avatar';
+import { CoatFrame } from '@/components/coat-frame';
+import { CoatPattern } from '@/components/coat-patterns';
+import { COAT_LIST, DEFAULT_COAT, getCoat } from '@/constants/coats';
 import {
   addWeightEntry,
   createCat,
@@ -34,13 +36,13 @@ const SEX_OPTIONS: { value: Sex; label: string }[] = [
 
 export default function SettingsScreen() {
   const db = useSQLiteContext();
-  const { cats, feeds, refreshCats, refreshFeeds } = useApp();
+  const { cats, feeds, currentCat, refreshCats, refreshFeeds } = useApp();
   const [catModal, setCatModal] = useState(false);
   const [editingCat, setEditingCat] = useState<Cat | null>(null);
   const [catName, setCatName] = useState('');
   const [catSex, setCatSex] = useState<Sex>('unknown');
   const [catBirth, setCatBirth] = useState('');
-  const [catColor, setCatColor] = useState<string>(CAT_COLORS[0]);
+  const [catColor, setCatColor] = useState<string>(DEFAULT_COAT.id);
   const [weights, setWeights] = useState<WeightEntry[]>([]);
   const [weightGrams, setWeightGrams] = useState('');
   const [weightDate, setWeightDate] = useState(todayKey());
@@ -64,7 +66,7 @@ export default function SettingsScreen() {
     setCatName('');
     setCatSex('unknown');
     setCatBirth('');
-    setCatColor(CAT_COLORS[cats.length % CAT_COLORS.length]);
+    setCatColor(DEFAULT_COAT.id);
     setWeights([]);
     setWeightGrams('');
     setWeightDate(todayKey());
@@ -76,7 +78,7 @@ export default function SettingsScreen() {
     setCatName(cat.name);
     setCatSex(cat.sex);
     setCatBirth(cat.birthDate ?? '');
-    setCatColor(cat.color);
+    setCatColor(getCoat(cat.color).id);
     setWeightGrams('');
     setWeightDate(todayKey());
     setCatModal(true);
@@ -86,11 +88,12 @@ export default function SettingsScreen() {
   const saveCat = async () => {
     const name = catName.trim();
     if (!name) return;
+    const coat = getCoat(catColor);
     const payload = {
       name,
       sex: catSex,
       birthDate: catBirth.trim() || null,
-      color: catColor,
+      color: coat.id,
     };
     if (editingCat) {
       await updateCat(db, editingCat.id, payload);
@@ -154,11 +157,40 @@ export default function SettingsScreen() {
     refreshFeeds();
   };
 
+  const previewCoat = catModal
+    ? getCoat(catColor)
+    : currentCat
+      ? getCoat(currentCat.color)
+      : DEFAULT_COAT;
+
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFF8F3' }} edges={['top']}>
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <Text style={{ fontSize: 20, fontWeight: '700', color: '#1F1B15' }}>Настройки</Text>
+    <CoatFrame
+      coat={previewCoat}
+      header={
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            paddingHorizontal: 16,
+            paddingVertical: 10,
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: '#FFFFFF',
+              borderRadius: 999,
+              paddingHorizontal: 14,
+              paddingVertical: 8,
+              shadowColor: 'rgba(31,27,21,0.25)',
+              shadowOpacity: 1,
+              shadowRadius: 6,
+              shadowOffset: { width: 0, height: 2 },
+              elevation: 4,
+            }}
+          >
+            <Text style={{ fontSize: 18, fontWeight: '700', color: '#1F1B15' }}>Настройки</Text>
+          </View>
           <Pressable
             onPress={openCreateCat}
             style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: '#9D3E1A' }}
@@ -166,7 +198,9 @@ export default function SettingsScreen() {
             <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>+ Кот</Text>
           </Pressable>
         </View>
-
+      }
+    >
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
         <Text style={{ fontSize: 14, fontWeight: '700', color: '#56423C', marginBottom: 8 }}>Коты</Text>
         {cats.length === 0 ? (
           <Text style={{ fontSize: 13, color: '#A49C93', marginBottom: 16 }}>Котов пока нет</Text>
@@ -187,20 +221,7 @@ export default function SettingsScreen() {
               borderColor: '#DDC0B7',
             }}
           >
-            <View
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: 18,
-                backgroundColor: cat.color,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>
-                {cat.name.charAt(0).toUpperCase()}
-              </Text>
-            </View>
+            <CatAvatar coat={getCoat(cat.color)} name={cat.name} size={36} />
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 15, fontWeight: '700', color: '#1F1B15' }}>{cat.name}</Text>
               <Text style={{ fontSize: 12, color: '#56423C' }}>
@@ -327,10 +348,16 @@ export default function SettingsScreen() {
                         alignItems: 'center',
                         paddingVertical: 8,
                         borderRadius: 12,
-                        backgroundColor: active ? catColor : '#F6ECE3',
+                        backgroundColor: active ? getCoat(catColor).accent : '#F6ECE3',
                       }}
                     >
-                      <Text style={{ fontSize: 14, fontWeight: '700', color: active ? '#fff' : '#56423C' }}>
+                      <Text
+                        style={{
+                          fontSize: 14,
+                          fontWeight: '700',
+                          color: active ? getCoat(catColor).onAccent : '#56423C',
+                        }}
+                      >
                         {opt.label}
                       </Text>
                     </Pressable>
@@ -357,26 +384,31 @@ export default function SettingsScreen() {
                 }}
               />
 
-              <Text style={{ fontSize: 12, fontWeight: '700', color: '#56423C', marginBottom: 6 }}>Цвет</Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-                {CAT_COLORS.map((color) => {
-                  const active = color === catColor;
+              <Text style={{ fontSize: 12, fontWeight: '700', color: '#56423C', marginBottom: 6 }}>Шерсть</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 8 }}>
+                {COAT_LIST.map((coat) => {
+                  const active = coat.id === catColor;
                   return (
                     <Pressable
-                      key={color}
-                      onPress={() => setCatColor(color)}
+                      key={coat.id}
+                      onPress={() => setCatColor(coat.id)}
                       style={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: 16,
-                        backgroundColor: color,
-                        borderWidth: active ? 3 : 0,
-                        borderColor: '#1F1B15',
+                        width: 44,
+                        height: 44,
+                        borderRadius: 22,
+                        overflow: 'hidden',
+                        borderWidth: active ? 3 : 1,
+                        borderColor: active ? '#1F1B15' : '#DDC0B7',
                       }}
-                    />
+                    >
+                      <CoatPattern coat={coat} width={44} height={44} />
+                    </Pressable>
                   );
                 })}
               </View>
+              <Text style={{ fontSize: 12, color: '#56423C', marginBottom: 16 }}>
+                {getCoat(catColor).label}
+              </Text>
 
               {editingCat ? (
                 <>
@@ -472,10 +504,10 @@ export default function SettingsScreen() {
                     alignItems: 'center',
                     paddingVertical: 12,
                     borderRadius: 12,
-                    backgroundColor: catColor,
+                    backgroundColor: getCoat(catColor).accent,
                   }}
                 >
-                  <Text style={{ fontSize: 14, fontWeight: '700', color: '#fff' }}>
+                  <Text style={{ fontSize: 14, fontWeight: '700', color: getCoat(catColor).onAccent }}>
                     {editingCat ? 'Сохранить' : 'Добавить'}
                   </Text>
                 </Pressable>
@@ -599,6 +631,6 @@ export default function SettingsScreen() {
           </Pressable>
         </Pressable>
       </Modal>
-    </SafeAreaView>
+    </CoatFrame>
   );
 }

@@ -12,6 +12,7 @@ import {
 
 import { QuantityStepper, mealsLabel } from '@/components/quantity-stepper';
 import { TimePill, type DateTimeValue } from '@/components/time-pill';
+import { CatAvatar } from '@/components/cat-avatar';
 import {
   ACTION_META,
   FEED_UNIT_LABELS,
@@ -19,6 +20,7 @@ import {
   PEE_VOLUME_LABELS,
   STOOL_LABELS,
 } from '@/constants/design';
+import { getCoat } from '@/constants/coats';
 import { createEvent, createNote, savePhotoAsset } from '@/db/repositories';
 import type { Cat, EventType, Feed, PeeVolume, StoolQuality } from '@/types/domain';
 import { dayKey, formatTime } from '@/utils/dates';
@@ -126,6 +128,7 @@ export function QuickAddPanel({ cat, feeds, onMutated }: Props) {
 
   const meta = expanded ? ACTION_META[expanded] : null;
   const unit = feeds.find((f) => f.id === activeFeedId)?.unit ?? 'gram';
+  const coat = getCoat(cat.color);
 
   return (
     <View
@@ -136,7 +139,7 @@ export function QuickAddPanel({ cat, feeds, onMutated }: Props) {
         marginHorizontal: 16,
         marginBottom: 12,
         borderWidth: 1.5,
-        borderColor: `${cat.color}40`,
+        borderColor: coat.border,
         shadowColor: 'rgba(84,78,71,0.08)',
         shadowOpacity: 1,
         shadowRadius: 12,
@@ -153,23 +156,10 @@ export function QuickAddPanel({ cat, feeds, onMutated }: Props) {
         }}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <View
-            style={{
-              width: 28,
-              height: 28,
-              borderRadius: 14,
-              backgroundColor: cat.color,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>
-              {cat.name.charAt(0).toUpperCase()}
-            </Text>
-          </View>
+          <CatAvatar coat={coat} name={cat.name} size={28} />
           <Text style={{ fontSize: 15, fontWeight: '700', color: '#1F1B15' }}>Быстрая запись</Text>
         </View>
-        <TimePill value={dateTime} onChange={setDateTime} catColor={cat.color} />
+        <TimePill value={dateTime} onChange={setDateTime} catColor={coat.accent} />
       </View>
 
       <View style={{ flexDirection: 'row', gap: 8 }}>

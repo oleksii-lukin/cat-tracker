@@ -5,6 +5,8 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ACTION_META, FEED_UNIT_LABELS, PEE_VOLUME_LABELS, STOOL_LABELS } from '@/constants/design';
+import { CoatFrame } from '@/components/coat-frame';
+import { getCoat } from '@/constants/coats';
 import { getDaySummaries } from '@/db/repositories';
 import { useApp } from '@/context/app-context';
 import type { DaySummary, FeedKind } from '@/types/domain';
@@ -115,13 +117,38 @@ export default function StatsScreen() {
     );
   }
 
+  const coat = getCoat(currentCat.color);
+
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFF8F3' }} edges={['top']}>
-      <ScrollView contentContainerStyle={{ padding: 16 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <Text style={{ fontSize: 20, fontWeight: '700', color: '#1F1B15' }}>
-            Статистика · {currentCat.name}
-          </Text>
+    <CoatFrame
+      coat={coat}
+      header={
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingHorizontal: 16,
+            paddingVertical: 10,
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: '#FFFFFF',
+              borderRadius: 999,
+              paddingHorizontal: 14,
+              paddingVertical: 8,
+              shadowColor: 'rgba(31,27,21,0.25)',
+              shadowOpacity: 1,
+              shadowRadius: 6,
+              shadowOffset: { width: 0, height: 2 },
+              elevation: 4,
+            }}
+          >
+            <Text style={{ fontSize: 18, fontWeight: '700', color: '#1F1B15' }}>
+              Статистика · {currentCat.name}
+            </Text>
+          </View>
           <View style={{ flexDirection: 'row', gap: 6 }}>
             {RANGES.map((r) => {
               const active = r.key === rangeKey;
@@ -133,10 +160,10 @@ export default function StatsScreen() {
                     paddingHorizontal: 12,
                     paddingVertical: 6,
                     borderRadius: 999,
-                    backgroundColor: active ? currentCat.color : '#F6ECE3',
+                    backgroundColor: active ? coat.accent : '#F6ECE3',
                   }}
                 >
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: active ? '#fff' : '#56423C' }}>
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: active ? coat.onAccent : '#56423C' }}>
                     {r.label}
                   </Text>
                 </Pressable>
@@ -144,7 +171,9 @@ export default function StatsScreen() {
             })}
           </View>
         </View>
-
+      }
+    >
+      <ScrollView contentContainerStyle={{ padding: 16 }}>
         <View style={{ flexDirection: 'column', gap: 8 }}>
           {days.map((day) => {
             const s = summaries[day] ?? EMPTY_SUMMARY;
@@ -165,7 +194,7 @@ export default function StatsScreen() {
                   borderRadius: 14,
                   padding: 12,
                   borderWidth: isToday ? 2 : 1,
-                  borderColor: isToday ? currentCat.color : '#DDC0B7',
+                  borderColor: isToday ? coat.accent : '#DDC0B7',
                 }}
               >
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: isEmpty ? 0 : 8 }}>
@@ -207,6 +236,6 @@ export default function StatsScreen() {
           {loading ? 'Загрузка…' : 'Тап по дню — открыть его в дневнике'}
         </Text>
       </ScrollView>
-    </SafeAreaView>
+    </CoatFrame>
   );
 }

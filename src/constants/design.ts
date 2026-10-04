@@ -26,17 +26,6 @@ export const Design = {
   },
 } as const;
 
-export const CAT_COLORS = [
-  '#D96B43',
-  '#2B8A8D',
-  '#D9933D',
-  '#7C6DAF',
-  '#43997A',
-  '#C45C6A',
-  '#5B7DB1',
-  '#8A6D3B',
-] as const;
-
 export const ACTION_META: Record<
   'poop' | 'pee' | 'food',
   { label: string; emoji: string; main: string; soft: string }

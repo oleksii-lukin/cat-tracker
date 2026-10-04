@@ -13,6 +13,7 @@ import {
 import { EventCard } from '@/components/event-card';
 import { EventSheet } from '@/components/event-sheet';
 import { ACTION_META, NOTE_META } from '@/constants/design';
+import { getCoat } from '@/constants/coats';
 import {
   createEvent,
   hasDataBefore,
@@ -384,7 +385,7 @@ export function JournalFeed({ cat, feeds, revision, focusDay, onFocusDayHandled 
           key={editing.id}
           event={editing}
           feeds={feeds}
-          catColor={cat.color}
+          catColor={getCoat(cat.color).accent}
           onSave={handleSaveEdit}
           onDelete={handleDelete}
           onClose={() => setEditing(null)}
@@ -451,7 +452,7 @@ export function JournalFeed({ cat, feeds, revision, focusDay, onFocusDayHandled 
                   alignItems: 'center',
                   paddingVertical: 12,
                   borderRadius: 12,
-                  backgroundColor: cat.color,
+                  backgroundColor: getCoat(cat.color).accent,
                 }}
               >
                 <Text style={{ fontSize: 14, fontWeight: '700', color: '#fff' }}>Сохранить</Text>
