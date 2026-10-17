@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 import { CatChips } from '@/components/cat-chips';
 import { CoatFrame } from '@/components/coat-frame';
@@ -10,6 +11,7 @@ import { useApp } from '@/context/app-context';
 import { getCoat } from '@/constants/coats';
 
 export default function JournalScreen() {
+  const { t } = useTranslation();
   const {
     cats,
     feeds,
@@ -33,10 +35,10 @@ export default function JournalScreen() {
       <SafeAreaView style={{ flex: 1, backgroundColor: '#FFF8F3' }}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
           <Text style={{ fontSize: 17, fontWeight: '700', color: '#1F1B15' }}>
-            Добавьте кота в настройках
+            {t('journal.addCatTitle')}
           </Text>
           <Text style={{ fontSize: 13, color: '#56423C', textAlign: 'center', marginTop: 8 }}>
-            Вкладка «Настройки» → «Коты» → «+».
+            {t('journal.addCatHint')}
           </Text>
         </View>
       </SafeAreaView>

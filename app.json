@@ -8,7 +8,10 @@
     "scheme": "cattracker",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "infoPlist": {
+        "CFBundleAllowMixedLocalizations": true
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -23,6 +26,16 @@
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
+    "locales": {
+      "ru": "./languages/ru.json",
+      "uk": "./languages/uk.json",
+      "be": "./languages/be.json",
+      "en": "./languages/en.json",
+      "es": "./languages/es.json",
+      "de": "./languages/de.json",
+      "it": "./languages/it.json",
+      "fr": "./languages/fr.json"
+    },
     "plugins": [
       "expo-router",
       "expo-sqlite",
@@ -30,6 +43,15 @@
         "expo-image-picker",
         {
           "photosPermission": "Приложение использует фото, чтобы прикреплять снимки стула и других наблюдений к событиям."
+        }
+      ],
+      [
+        "expo-localization",
+        {
+          "supportedLocales": {
+            "ios": ["ru", "uk", "be", "en", "es", "de", "it", "fr"],
+            "android": ["ru", "uk", "be", "en", "es", "de", "it", "fr"]
+          }
         }
       ],
       [

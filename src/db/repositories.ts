@@ -1,5 +1,6 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
+import { PRESET_FEED_NAMES, type Language } from '@/i18n';
 import type {
   Cat,
   DayEvent,
@@ -535,4 +536,47 @@ export async function savePhotoAsset(sourceUri: string, eventId: string): Promis
   }
   await src.copy(dest);
   return dest.uri;
+}
+
+/* ---------- App meta ---------- */
+
+export async function getMeta(db: SQLiteDatabase, key: string): Promise<string | null> {
+  const row = await db.getFirstAsync<{ value: string }>(
+    `SELECT value FROM app_meta WHERE key = ?`,
+    key
+  );
+  return row?.value ?? null;
+}
+
+export async function setMeta(db: SQLiteDatabase, key: string, value: string): Promise<void> {
+  await db.runAsync(
+    `INSERT INTO app_meta (key, value) VALUES (?, ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+    key, value
+  );
+}
+
+export async function deleteMeta(db: SQLiteDatabase, key: string): Promise<void> {
+  await db.runAsync(`DELETE FROM app_meta WHERE key = ?`, key);
+}
+
+/* ---------- Localization of preset data ---------- */
+
+/**
+ * Renames preset feeds to the given language, but only when the current name
+ * matches a known preset name on any supported language — so a name edited
+ * by the user is never overwritten.
+ */
+export async function localizePresetFeeds(db: SQLiteDatabase, lang: Language): Promise<void> {
+  const ts = nowIso();
+  for (const kind of ['wet', 'dry'] as const) {
+    const knownNames = Object.values(PRESET_FEED_NAMES[kind]);
+    const targetName = PRESET_FEED_NAMES[kind][lang];
+    const placeholders = knownNames.map(() => '?').join(', ');
+    await db.runAsync(
+      `UPDATE feeds SET name = ?, updated_at = ?
+       WHERE is_preset = 1 AND deleted_at IS NULL AND kind = ? AND name IN (${placeholders})`,
+      targetName, ts, kind, ...knownNames
+    );
+  }
 }

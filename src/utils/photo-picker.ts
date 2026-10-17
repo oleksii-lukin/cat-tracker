@@ -1,12 +1,14 @@
 import * as ImagePicker from 'expo-image-picker';
 import { Alert } from 'react-native';
 
+import i18n from '@/i18n';
+
 async function takePhoto(): Promise<string | null> {
   const permission = await ImagePicker.requestCameraPermissionsAsync();
   if (!permission.granted) {
     Alert.alert(
-      'Нет доступа к камере',
-      'Разрешите доступ к камере в настройках устройства, чтобы сделать фото.',
+      i18n.t('photo.cameraDeniedTitle'),
+      i18n.t('photo.cameraDeniedMessage'),
     );
     return null;
   }
@@ -30,12 +32,12 @@ async function pickFromLibrary(): Promise<string | null> {
 export function pickPhoto(): Promise<string | null> {
   return new Promise((resolve) => {
     Alert.alert(
-      'Фото',
-      'Откуда взять фото?',
+      i18n.t('photo.title'),
+      i18n.t('photo.message'),
       [
-        { text: 'Сделать фото', onPress: () => resolve(takePhoto()) },
-        { text: 'Из галереи', onPress: () => resolve(pickFromLibrary()) },
-        { text: 'Отмена', style: 'cancel', onPress: () => resolve(null) },
+        { text: i18n.t('photo.take'), onPress: () => resolve(takePhoto()) },
+        { text: i18n.t('photo.library'), onPress: () => resolve(pickFromLibrary()) },
+        { text: i18n.t('common.cancel'), style: 'cancel', onPress: () => resolve(null) },
       ],
       { cancelable: true, onDismiss: () => resolve(null) },
     );

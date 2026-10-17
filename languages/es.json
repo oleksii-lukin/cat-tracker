@@ -1,0 +1,6 @@
+{
+  "ios": {
+    "NSPhotoLibraryUsageDescription": "La aplicación usa fotos para adjuntar capturas de heces y otras observaciones a los eventos.",
+    "NSCameraUsageDescription": "La aplicación usa la cámara para tomar capturas de heces y otras observaciones para los eventos."
+  }
+}

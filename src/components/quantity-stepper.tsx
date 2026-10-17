@@ -14,14 +14,6 @@ function clampTo(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, Math.round(value * 100) / 100));
 }
 
-export function mealsLabel(n: number): string {
-  const mod10 = n % 10;
-  const mod100 = n % 100;
-  if (mod10 === 1 && mod100 !== 11) return 'приём';
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return 'приёма';
-  return 'приёмов';
-}
-
 interface Props {
   value: number;
   onChange: (next: number) => void;

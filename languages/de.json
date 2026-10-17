@@ -1,0 +1,6 @@
+{
+  "ios": {
+    "NSPhotoLibraryUsageDescription": "Die App verwendet Fotos, um Kotfotos und andere Beobachtungen Ereignissen hinzuzufügen.",
+    "NSCameraUsageDescription": "Die App verwendet die Kamera, um Kotfotos und andere Beobachtungen für Ereignisse aufzunehmen."
+  }
+}

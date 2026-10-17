@@ -3,69 +3,34 @@ import { router } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
-import { ACTION_META, FEED_UNIT_LABELS, PEE_VOLUME_LABELS, STOOL_LABELS } from '@/constants/design';
+import { ACTION_META } from '@/constants/design';
 import { CoatFrame } from '@/components/coat-frame';
 import { getCoat } from '@/constants/coats';
 import { getDaySummaries } from '@/db/repositories';
 import { useApp } from '@/context/app-context';
-import type { DaySummary, FeedKind } from '@/types/domain';
-import { addDays, formatDayRu, todayKey, weekdayShort } from '@/utils/dates';
+import type { DaySummary, FeedKind, PeeVolume, StoolQuality } from '@/types/domain';
+import { addDays, formatDay, todayKey, weekdayShort } from '@/utils/dates';
 
-const RANGES: { key: 'week' | 'month'; label: string; days: number }[] = [
-  { key: 'week', label: 'Неделя', days: 7 },
-  { key: 'month', label: 'Месяц', days: 28 },
-];
+const RANGES = [
+  { key: 'week', labelKey: 'stats.rangeWeek', days: 7 },
+  { key: 'month', labelKey: 'stats.rangeMonth', days: 28 },
+] as const;
 
-const FEED_KIND_LABELS: Record<FeedKind, string> = { dry: 'Сухой', wet: 'Мокрый' };
+type RangeKey = (typeof RANGES)[number]['key'];
 
-function pluralTimes(n: number): string {
-  const mod10 = n % 10;
-  const mod100 = n % 100;
-  if (mod10 === 1 && mod100 !== 11) return `${n} раз`;
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return `${n} раза`;
-  return `${n} раз`;
-}
-
-function uniqueLabels(values: string[], labels: Record<string, string>): string {
+function uniqueLabels<T extends string>(values: T[], labelFn: (v: T) => string): string {
   const seen = new Set<string>();
   const out: string[] = [];
   for (const v of values) {
-    const label = (labels[v] ?? v).toLowerCase();
+    const label = labelFn(v).toLowerCase();
     if (!seen.has(label)) {
       seen.add(label);
       out.push(label);
     }
   }
   return out.join(', ');
-}
-
-function formatFood(summary: DaySummary): string | null {
-  if (summary.foodEvents === 0) return null;
-  const parts = summary.foodByKind.map((b) => {
-    const kindLabel = FEED_KIND_LABELS[b.kind] ?? b.kind;
-    if (b.totalAmount > 0) {
-      return `${kindLabel} ${b.totalAmount} ${FEED_UNIT_LABELS[b.unit] ?? ''}`.trim();
-    }
-    return `${kindLabel} без объёма`;
-  });
-  return `${ACTION_META.food.label}: ${parts.join(' · ')}`;
-}
-
-function formatPee(summary: DaySummary): string | null {
-  if (summary.peeCount === 0) return null;
-  const volumes = summary.peeVolumes.length
-    ? ` (${uniqueLabels(summary.peeVolumes, PEE_VOLUME_LABELS)})`
-    : '';
-  return `${ACTION_META.pee.label} ${pluralTimes(summary.peeCount)}${volumes}`;
-}
-
-function formatPoop(summary: DaySummary): string | null {
-  if (summary.poopCount === 0) return null;
-  const qualities = summary.poopQualities.length
-    ? `: ${uniqueLabels(summary.poopQualities, STOOL_LABELS)}`
-    : '';
-  return `${ACTION_META.poop.label} ${pluralTimes(summary.poopCount)}${qualities}`;
 }
 
 const EMPTY_SUMMARY: DaySummary = {
@@ -78,9 +43,10 @@ const EMPTY_SUMMARY: DaySummary = {
 };
 
 export default function StatsScreen() {
+  const { t } = useTranslation();
   const db = useSQLiteContext();
   const { currentCat, setFocusDay, revision } = useApp();
-  const [rangeKey, setRangeKey] = useState<'week' | 'month'>('week');
+  const [rangeKey, setRangeKey] = useState<RangeKey>('week');
   const [summaries, setSummaries] = useState<Record<string, DaySummary>>({});
   const [loading, setLoading] = useState(false);
 
@@ -105,12 +71,43 @@ export default function StatsScreen() {
     load();
   }, [load, currentCat?.id, revision]);
 
+  const feedKindLabel = (kind: FeedKind) =>
+    kind === 'dry' ? t('stats.feedKindDry') : t('stats.feedKindWet');
+
+  const formatFood = (summary: DaySummary): string | null => {
+    if (summary.foodEvents === 0) return null;
+    const parts = summary.foodByKind.map((b) => {
+      const kindLabel = feedKindLabel(b.kind);
+      if (b.totalAmount > 0) {
+        return `${kindLabel} ${b.totalAmount} ${t(`units.${b.unit}`)}`.trim();
+      }
+      return `${kindLabel} ${t('stats.noVolume')}`;
+    });
+    return `${t('action.food')}: ${parts.join(' · ')}`;
+  };
+
+  const formatPee = (summary: DaySummary): string | null => {
+    if (summary.peeCount === 0) return null;
+    const volumes = summary.peeVolumes.length
+      ? ` (${uniqueLabels<PeeVolume>(summary.peeVolumes, (v) => t(`pee.${v}`))})`
+      : '';
+    return `${t('action.pee')} ${summary.peeCount} ${t('stats.times', { count: summary.peeCount })}${volumes}`;
+  };
+
+  const formatPoop = (summary: DaySummary): string | null => {
+    if (summary.poopCount === 0) return null;
+    const qualities = summary.poopQualities.length
+      ? `: ${uniqueLabels<StoolQuality>(summary.poopQualities, (q) => t(`stool.${q}`))}`
+      : '';
+    return `${t('action.poop')} ${summary.poopCount} ${t('stats.times', { count: summary.poopCount })}${qualities}`;
+  };
+
   if (!currentCat) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: '#FFF8F3' }}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
           <Text style={{ fontSize: 15, fontWeight: '600', color: '#1F1B15', textAlign: 'center' }}>
-            Сначала добавьте кота в настройках
+            {t('stats.addCatFirst')}
           </Text>
         </View>
       </SafeAreaView>
@@ -146,7 +143,7 @@ export default function StatsScreen() {
             }}
           >
             <Text style={{ fontSize: 18, fontWeight: '700', color: '#1F1B15' }}>
-              Статистика · {currentCat.name}
+              {t('stats.header', { name: currentCat.name })}
             </Text>
           </View>
           <View style={{ flexDirection: 'row', gap: 6 }}>
@@ -164,7 +161,7 @@ export default function StatsScreen() {
                   }}
                 >
                   <Text style={{ fontSize: 12, fontWeight: '700', color: active ? coat.onAccent : '#56423C' }}>
-                    {r.label}
+                    {t(r.labelKey)}
                   </Text>
                 </Pressable>
               );
@@ -199,10 +196,10 @@ export default function StatsScreen() {
               >
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: isEmpty ? 0 : 8 }}>
                   <Text style={{ fontSize: 13, fontWeight: '700', color: '#1F1B15' }}>
-                    {weekdayShort(day)}, {formatDayRu(day)}
+                    {weekdayShort(day)}, {formatDay(day)}
                   </Text>
                   {isEmpty ? (
-                    <Text style={{ fontSize: 11, color: '#A49C93' }}>Нет записей</Text>
+                    <Text style={{ fontSize: 11, color: '#A49C93' }}>{t('stats.noEntries')}</Text>
                   ) : null}
                 </View>
                 {isEmpty ? null : (
@@ -233,7 +230,7 @@ export default function StatsScreen() {
         </View>
 
         <Text style={{ fontSize: 11, color: '#A49C93', marginTop: 14, textAlign: 'center' }}>
-          {loading ? 'Загрузка…' : 'Тап по дню — открыть его в дневнике'}
+          {loading ? t('common.loading') : t('stats.tapHint')}
         </Text>
       </ScrollView>
     </CoatFrame>

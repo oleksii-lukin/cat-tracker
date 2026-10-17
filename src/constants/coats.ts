@@ -10,7 +10,6 @@ export type CoatId =
 
 export interface Coat {
   id: CoatId;
-  label: string;
   accent: string;
   accentSoft: string;
   border: string;
@@ -26,7 +25,6 @@ export interface Coat {
 export const CAT_COATS: Record<CoatId, Coat> = {
   orange_tabby: {
     id: 'orange_tabby',
-    label: 'Рыжий полосатый',
     accent: '#D96B43',
     accentSoft: '#FBEBE4',
     border: '#D96B4366',
@@ -36,7 +34,6 @@ export const CAT_COATS: Record<CoatId, Coat> = {
   },
   black: {
     id: 'black',
-    label: 'Чёрный',
     accent: '#2B2B2B',
     accentSoft: '#EDEDED',
     border: '#2B2B2B40',
@@ -46,7 +43,6 @@ export const CAT_COATS: Record<CoatId, Coat> = {
   },
   white: {
     id: 'white',
-    label: 'Белый',
     accent: '#8A726A',
     accentSoft: '#F0E7DD',
     border: '#8A726A40',
@@ -56,7 +52,6 @@ export const CAT_COATS: Record<CoatId, Coat> = {
   },
   tuxedo: {
     id: 'tuxedo',
-    label: 'Чёрно-белый',
     accent: '#3D3D3D',
     accentSoft: '#EDEDED',
     border: '#3D3D3D40',
@@ -66,7 +61,6 @@ export const CAT_COATS: Record<CoatId, Coat> = {
   },
   gray: {
     id: 'gray',
-    label: 'Серый',
     accent: '#6B7B8C',
     accentSoft: '#EBF0F5',
     border: '#6B7B8C40',
@@ -76,7 +70,6 @@ export const CAT_COATS: Record<CoatId, Coat> = {
   },
   calico: {
     id: 'calico',
-    label: 'Калико',
     accent: '#D9933D',
     accentSoft: '#FAF0DF',
     border: '#D9933D40',
@@ -86,7 +79,6 @@ export const CAT_COATS: Record<CoatId, Coat> = {
   },
   tortoiseshell: {
     id: 'tortoiseshell',
-    label: 'Черепаховая',
     accent: '#8A4B2A',
     accentSoft: '#F5E6DC',
     border: '#8A4B2A40',
@@ -96,7 +88,6 @@ export const CAT_COATS: Record<CoatId, Coat> = {
   },
   siamese: {
     id: 'siamese',
-    label: 'Сиамский',
     accent: '#5C4033',
     accentSoft: '#F2EBDF',
     border: '#5C403340',

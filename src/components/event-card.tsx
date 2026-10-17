@@ -1,7 +1,8 @@
 import React from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
-import { ACTION_META, FEED_UNIT_LABELS, PEE_VOLUME_LABELS, STOOL_LABELS } from '@/constants/design';
+import { ACTION_META } from '@/constants/design';
 import type { DayEvent, Feed } from '@/types/domain';
 
 interface Props {
@@ -12,24 +13,25 @@ interface Props {
 }
 
 export function EventCard({ event, feeds, onPress, onRepeat }: Props) {
+  const { t } = useTranslation();
   const meta = ACTION_META[event.type];
   const feed = event.feedId ? feeds.find((f) => f.id === event.feedId) ?? null : null;
 
   const details: string[] = [];
   if (event.type === 'poop' && event.stoolQuality) {
-    details.push(STOOL_LABELS[event.stoolQuality] ?? event.stoolQuality);
+    details.push(t(`stool.${event.stoolQuality}`));
   }
   if (event.type === 'pee' && event.peeVolume) {
-    details.push(PEE_VOLUME_LABELS[event.peeVolume] ?? event.peeVolume);
+    details.push(t(`pee.${event.peeVolume}`));
   }
   if (event.type === 'food' && feed) {
     let amountLabel = feed.name;
     if (event.amount != null) {
-      amountLabel += `, ${event.amount} ${FEED_UNIT_LABELS[feed.unit] ?? ''}`;
+      amountLabel += `, ${event.amount} ${t(`units.${feed.unit}`)}`;
     }
     details.push(amountLabel);
     if (event.mealsCount > 1) {
-      details.push(`${event.mealsCount} приёма`);
+      details.push(`${event.mealsCount} ${t('event.meals', { count: event.mealsCount })}`);
     }
   }
 
@@ -72,7 +74,7 @@ export function EventCard({ event, feeds, onPress, onRepeat }: Props) {
             numberOfLines={1}
             style={{ fontSize: 15, fontWeight: '700', color: '#1F1B15', flex: 1 }}
           >
-            {meta.label}
+            {t(`action.${event.type}`)}
           </Text>
           <Text style={{ fontSize: 12, fontWeight: '700', color: '#56423C', flexShrink: 0 }}>
             {event.eventTime ?? '—'}
@@ -103,7 +105,9 @@ export function EventCard({ event, feeds, onPress, onRepeat }: Props) {
               borderRadius: 8,
             }}
           >
-            <Text style={{ fontSize: 11, fontWeight: '700', color: meta.main }}>{meta.label}</Text>
+            <Text style={{ fontSize: 11, fontWeight: '700', color: meta.main }}>
+              {t(`action.${event.type}`)}
+            </Text>
           </View>
           {event.isUncertain ? (
             <View
@@ -114,7 +118,9 @@ export function EventCard({ event, feeds, onPress, onRepeat }: Props) {
                 borderRadius: 8,
               }}
             >
-              <Text style={{ fontSize: 11, fontWeight: '700', color: '#56423C' }}>неточное</Text>
+              <Text style={{ fontSize: 11, fontWeight: '700', color: '#56423C' }}>
+                {t('event.uncertainChip')}
+              </Text>
             </View>
           ) : null}
           {event.photoUri ? (

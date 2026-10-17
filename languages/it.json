@@ -1,0 +1,6 @@
+{
+  "ios": {
+    "NSPhotoLibraryUsageDescription": "L’app utilizza le foto per allegare scatti delle feci e altre osservazioni agli eventi.",
+    "NSCameraUsageDescription": "L’app utilizza la fotocamera per scattare foto delle feci e altre osservazioni per gli eventi."
+  }
+}

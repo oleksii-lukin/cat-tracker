@@ -1,0 +1,6 @@
+{
+  "ios": {
+    "NSPhotoLibraryUsageDescription": "The app uses photos to attach snapshots of stool and other observations to events.",
+    "NSCameraUsageDescription": "The app uses the camera to take snapshots of stool and other observations for events."
+  }
+}

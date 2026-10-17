@@ -1,7 +1,9 @@
 import { Tabs } from 'expo-router';
 import { Text } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 export default function TabsLayout() {
+  const { t } = useTranslation();
   return (
     <Tabs
       screenOptions={{
@@ -18,21 +20,21 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Дневник',
+          title: t('tabs.journal'),
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>📔</Text>,
         }}
       />
       <Tabs.Screen
         name="stats"
         options={{
-          title: 'Статистика',
+          title: t('tabs.stats'),
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>📊</Text>,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
-          title: 'Настройки',
+          title: t('tabs.settings'),
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 18, color }}>⚙️</Text>,
         }}
       />

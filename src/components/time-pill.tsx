@@ -7,8 +7,9 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
-import { addDays, dayKey, formatDayRu, formatTime, todayKey } from '@/utils/dates';
+import { addDays, dayKey, formatDay, formatTime, todayKey } from '@/utils/dates';
 
 export interface DateTimeValue {
   date: string;
@@ -24,6 +25,7 @@ interface Props {
 const DAY_OFFSETS = [0, 1, 2, 3, 4, 5, 6, 7];
 
 export function TimePill({ value, onChange, catColor }: Props) {
+  const { t } = useTranslation();
   const [modalOpen, setModalOpen] = useState(false);
   const [dateDraft, setDateDraft] = useState(value.date);
   const [timeDraft, setTimeDraft] = useState(value.time ?? formatTime(new Date()));
@@ -32,8 +34,8 @@ export function TimePill({ value, onChange, catColor }: Props) {
   const isNow = value.date === dayKey(now) && value.time === formatTime(now);
 
   const label = isNow
-    ? `Сейчас ${formatTime(now)}`
-    : `${formatDayRu(value.date)}${value.time ? `, ${value.time}` : ', без времени'}`;
+    ? t('time.nowAt', { time: formatTime(now) })
+    : `${formatDay(value.date)}${value.time ? `, ${value.time}` : `, ${t('time.withoutTimeShort')}`}`;
 
   const open = () => {
     setDateDraft(value.date);
@@ -80,11 +82,11 @@ export function TimePill({ value, onChange, catColor }: Props) {
             onPress={(e) => e.stopPropagation()}
           >
             <Text style={{ fontSize: 17, fontWeight: '700', color: '#1F1B15', marginBottom: 12 }}>
-              Дата и время
+              {t('time.dateTime')}
             </Text>
 
             <Text style={{ fontSize: 12, fontWeight: '700', color: '#56423C', marginBottom: 8 }}>
-              Дата
+              {t('time.date')}
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
               {DAY_OFFSETS.map((offset) => {
@@ -103,7 +105,7 @@ export function TimePill({ value, onChange, catColor }: Props) {
                     }}
                   >
                     <Text style={{ fontSize: 12, fontWeight: '600', color: active ? '#fff' : '#56423C' }}>
-                      {offset === 0 ? 'Сегодня' : offset === 1 ? 'Вчера' : formatDayRu(key)}
+                      {offset === 0 ? t('time.today') : offset === 1 ? t('time.yesterday') : formatDay(key)}
                     </Text>
                   </Pressable>
                 );
@@ -111,7 +113,7 @@ export function TimePill({ value, onChange, catColor }: Props) {
             </ScrollView>
 
             <Text style={{ fontSize: 12, fontWeight: '700', color: '#56423C', marginBottom: 8 }}>
-              Время
+              {t('time.timeLabel')}
             </Text>
             <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
               <Pressable
@@ -123,7 +125,7 @@ export function TimePill({ value, onChange, catColor }: Props) {
                   backgroundColor: '#F6ECE3',
                 }}
               >
-                <Text style={{ fontSize: 12, fontWeight: '600', color: '#56423C' }}>Сейчас</Text>
+                <Text style={{ fontSize: 12, fontWeight: '600', color: '#56423C' }}>{t('time.now')}</Text>
               </Pressable>
               <TextInput
                 value={timeDraft}
@@ -131,7 +133,7 @@ export function TimePill({ value, onChange, catColor }: Props) {
                   const cleaned = t.replace(/[^0-9:]/g, '').slice(0, 5);
                   setTimeDraft(cleaned);
                 }}
-                placeholder="ЧЧ:ММ"
+                placeholder={t('time.timePlaceholder')}
                 placeholderTextColor="#A49C93"
                 keyboardType="numbers-and-punctuation"
                 style={{
@@ -157,7 +159,7 @@ export function TimePill({ value, onChange, catColor }: Props) {
                   backgroundColor: '#F6ECE3',
                 }}
               >
-                <Text style={{ fontSize: 14, fontWeight: '600', color: '#56423C' }}>Без времени</Text>
+                <Text style={{ fontSize: 14, fontWeight: '600', color: '#56423C' }}>{t('time.noTime')}</Text>
               </Pressable>
               <Pressable
                 onPress={() => apply(true)}
@@ -169,12 +171,12 @@ export function TimePill({ value, onChange, catColor }: Props) {
                   backgroundColor: catColor,
                 }}
               >
-                <Text style={{ fontSize: 14, fontWeight: '700', color: '#fff' }}>Сохранить</Text>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: '#fff' }}>{t('common.save')}</Text>
               </Pressable>
             </View>
 
             <Text style={{ fontSize: 11, color: '#A49C93', marginTop: 10 }}>
-              Текущий выбор: {formatDayRu(dateDraft)}
+              {t('time.currentSelection', { date: formatDay(dateDraft) })}
             </Text>
           </Pressable>
         </Pressable>

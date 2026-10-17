@@ -9,6 +9,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { EventCard } from '@/components/event-card';
 import { EventSheet } from '@/components/event-sheet';
@@ -67,6 +68,7 @@ interface DayGroup {
 }
 
 function NoteCard({ note, onPress }: { note: Note; onPress: () => void }) {
+  const { t } = useTranslation();
   return (
     <Pressable
       onPress={onPress}
@@ -96,7 +98,7 @@ function NoteCard({ note, onPress }: { note: Note; onPress: () => void }) {
       <View style={{ flex: 1, minWidth: 0 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
           <Text style={{ fontSize: 12, fontWeight: '700', color: NOTE_META.main, flex: 1 }}>
-            Заметка
+            {t('note.label')}
           </Text>
           <Text style={{ fontSize: 12, fontWeight: '700', color: '#56423C', flexShrink: 0 }}>
             {note.time ?? '—'}
@@ -111,6 +113,7 @@ function NoteCard({ note, onPress }: { note: Note; onPress: () => void }) {
 }
 
 export function JournalFeed({ cat, feeds, revision, focusDay, onFocusDayHandled }: Props) {
+  const { t } = useTranslation();
   const db = useSQLiteContext();
   const [groups, setGroups] = useState<DayGroup[]>([]);
   const [loading, setLoading] = useState(false);
@@ -231,10 +234,10 @@ export function JournalFeed({ cat, feeds, revision, focusDay, onFocusDayHandled 
 
   const handleDelete = useCallback(async () => {
     if (!editing) return;
-    Alert.alert('Удалить событие?', 'Действие нельзя будет восстановить.', [
-      { text: 'Отмена', style: 'cancel' },
+    Alert.alert(t('deleteEvent.title'), t('deleteEvent.message'), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Удалить',
+        text: t('common.delete'),
         style: 'destructive',
         onPress: async () => {
           await softDeleteEvent(db, editing.id);
@@ -243,7 +246,7 @@ export function JournalFeed({ cat, feeds, revision, focusDay, onFocusDayHandled 
         },
       },
     ]);
-  }, [db, editing, refresh]);
+  }, [db, editing, refresh, t]);
 
   const openNote = useCallback((note: Note) => {
     setNoteDraft(note.text);
@@ -254,22 +257,22 @@ export function JournalFeed({ cat, feeds, revision, focusDay, onFocusDayHandled 
     if (!editingNote) return;
     const text = noteDraft.trim();
     if (!text) {
-      Alert.alert('Пустая заметка', 'Удалите заметку вместо сохранения пустого текста.', [
-        { text: 'ОК' },
+      Alert.alert(t('note.emptyTitle'), t('note.emptyMessage'), [
+        { text: t('common.ok') },
       ]);
       return;
     }
     await updateNote(db, editingNote.id, { text });
     setEditingNote(null);
     refresh();
-  }, [db, editingNote, noteDraft, refresh]);
+  }, [db, editingNote, noteDraft, refresh, t]);
 
   const deleteNote = useCallback(async () => {
     if (!editingNote) return;
-    Alert.alert('Удалить заметку?', 'Запись нельзя будет восстановить.', [
-      { text: 'Отмена', style: 'cancel' },
+    Alert.alert(t('deleteNote.title'), t('deleteNote.message'), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Удалить',
+        text: t('common.delete'),
         style: 'destructive',
         onPress: async () => {
           await softDeleteNote(db, editingNote.id);
@@ -278,21 +281,21 @@ export function JournalFeed({ cat, feeds, revision, focusDay, onFocusDayHandled 
         },
       },
     ]);
-  }, [db, editingNote, refresh]);
+  }, [db, editingNote, refresh, t]);
 
   if (groups.length === 0 && !loading) {
     return (
       <View style={{ paddingHorizontal: 16, paddingVertical: 32, alignItems: 'center' }}>
         <Text style={{ fontSize: 15, fontWeight: '600', color: '#1F1B15', textAlign: 'center' }}>
-          Пока пусто
+          {t('journal.emptyTitle')}
         </Text>
         <Text style={{ fontSize: 13, color: '#56423C', textAlign: 'center', marginTop: 6 }}>
-          Дни появятся здесь после первых записей. Используйте «Быструю запись» сверху.
+          {t('journal.emptyHint')}
         </Text>
         {hasMore && nextFromDay ? (
           <Pressable onPress={loadEarlier} style={{ marginTop: 14 }}>
             <Text style={{ fontSize: 13, fontWeight: '600', color: '#9D3E1A' }}>
-              Показать ранние записи
+              {t('journal.showEarlier')}
             </Text>
           </Pressable>
         ) : null}
@@ -338,7 +341,7 @@ export function JournalFeed({ cat, feeds, revision, focusDay, onFocusDayHandled 
                 }}
               >
                 <Text style={{ fontSize: 11, fontWeight: '700', color: '#56423C' }}>
-                  {total} записей
+                  {total} {t('journal.entries', { count: total })}
                 </Text>
               </View>
             </View>
@@ -370,13 +373,13 @@ export function JournalFeed({ cat, feeds, revision, focusDay, onFocusDayHandled 
             <ActivityIndicator color={ACTION_META.food.main} />
           ) : (
             <Text style={{ fontSize: 13, fontWeight: '600', color: '#56423C' }}>
-              Показать раньше
+              {t('journal.showEarlierShort')}
             </Text>
           )}
         </Pressable>
       ) : (
         <View style={{ alignItems: 'center', paddingVertical: 14, marginBottom: 24 }}>
-          <Text style={{ fontSize: 12, color: '#A49C93' }}>Это всё, что есть в истории</Text>
+          <Text style={{ fontSize: 12, color: '#A49C93' }}>{t('journal.endOfHistory')}</Text>
         </View>
       )}
 
@@ -413,14 +416,14 @@ export function JournalFeed({ cat, feeds, revision, focusDay, onFocusDayHandled 
             onPress={(e) => e.stopPropagation()}
           >
             <Text style={{ fontSize: 16, fontWeight: '700', color: '#1F1B15', marginBottom: 10 }}>
-              Заметка{editingNote ? ` · ${editingNote.day}${editingNote.time ? `, ${editingNote.time}` : ''}` : ''}
+              {t('note.label')}{editingNote ? ` · ${editingNote.day}${editingNote.time ? `, ${editingNote.time}` : ''}` : ''}
             </Text>
             <TextInput
               value={noteDraft}
               onChangeText={setNoteDraft}
               multiline
               autoFocus
-              placeholder="Что случилось?"
+              placeholder={t('note.placeholder')}
               placeholderTextColor="#A49C93"
               style={{
                 backgroundColor: '#FCF2E8',
@@ -443,7 +446,7 @@ export function JournalFeed({ cat, feeds, revision, focusDay, onFocusDayHandled 
                   backgroundColor: '#FFDAD6',
                 }}
               >
-                <Text style={{ fontSize: 14, fontWeight: '700', color: '#93000A' }}>Удалить</Text>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: '#93000A' }}>{t('common.delete')}</Text>
               </Pressable>
               <Pressable
                 onPress={saveNote}
@@ -455,7 +458,7 @@ export function JournalFeed({ cat, feeds, revision, focusDay, onFocusDayHandled 
                   backgroundColor: getCoat(cat.color).accent,
                 }}
               >
-                <Text style={{ fontSize: 14, fontWeight: '700', color: '#fff' }}>Сохранить</Text>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: '#fff' }}>{t('common.save')}</Text>
               </Pressable>
             </View>
           </Pressable>

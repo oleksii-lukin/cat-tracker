@@ -9,17 +9,12 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
-import { QuantityStepper, mealsLabel } from '@/components/quantity-stepper';
+import { QuantityStepper } from '@/components/quantity-stepper';
 import { TimePill, type DateTimeValue } from '@/components/time-pill';
 import { CatAvatar } from '@/components/cat-avatar';
-import {
-  ACTION_META,
-  FEED_UNIT_LABELS,
-  NOTE_META,
-  PEE_VOLUME_LABELS,
-  STOOL_LABELS,
-} from '@/constants/design';
+import { ACTION_META, NOTE_META } from '@/constants/design';
 import { getCoat } from '@/constants/coats';
 import { createEvent, createNote, savePhotoAsset } from '@/db/repositories';
 import type { Cat, EventType, Feed, PeeVolume, StoolQuality } from '@/types/domain';
@@ -40,6 +35,7 @@ const GRAM_QUICK = [4, 6, 10, 15, 20, 30, 35];
 const MEALS_QUICK = [1, 2, 3];
 
 export function QuickAddPanel({ cat, feeds, onMutated }: Props) {
+  const { t } = useTranslation();
   const db = useSQLiteContext();
   const [expanded, setExpanded] = useState<EventType | null>(null);
   const [dateTime, setDateTime] = useState<DateTimeValue>(() => {
@@ -157,19 +153,19 @@ export function QuickAddPanel({ cat, feeds, onMutated }: Props) {
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <CatAvatar coat={coat} name={cat.name} size={28} />
-          <Text style={{ fontSize: 15, fontWeight: '700', color: '#1F1B15' }}>Быстрая запись</Text>
+          <Text style={{ fontSize: 15, fontWeight: '700', color: '#1F1B15' }}>{t('quickAdd.title')}</Text>
         </View>
         <TimePill value={dateTime} onChange={setDateTime} catColor={coat.accent} />
       </View>
 
       <View style={{ flexDirection: 'row', gap: 8 }}>
-        {(Object.keys(ACTION_META) as EventType[]).map((t) => {
-          const m = ACTION_META[t];
-          const active = expanded === t;
+        {(Object.keys(ACTION_META) as EventType[]).map((at) => {
+          const m = ACTION_META[at];
+          const active = expanded === at;
           return (
             <Pressable
-              key={t}
-              onPress={() => toggleExpanded(t)}
+              key={at}
+              onPress={() => toggleExpanded(at)}
               style={{
                 flex: 1,
                 alignItems: 'center',
@@ -189,7 +185,7 @@ export function QuickAddPanel({ cat, feeds, onMutated }: Props) {
                   marginTop: 2,
                 }}
               >
-                {m.label}
+                {t(`action.${at}`)}
               </Text>
             </Pressable>
           );
@@ -201,7 +197,7 @@ export function QuickAddPanel({ cat, feeds, onMutated }: Props) {
           {expanded === 'poop' ? (
             <View>
               <Text style={{ fontSize: 12, fontWeight: '700', color: '#56423C', marginBottom: 6 }}>
-                Стул
+                {t('event.stool')}
               </Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                 {STOOL_OPTIONS.map((opt) => {
@@ -220,7 +216,7 @@ export function QuickAddPanel({ cat, feeds, onMutated }: Props) {
                       }}
                     >
                       <Text style={{ fontSize: 12, fontWeight: '600', color: meta.main }}>
-                        {STOOL_LABELS[opt]}
+                        {t(`stool.${opt}`)}
                       </Text>
                     </Pressable>
                   );
@@ -232,7 +228,7 @@ export function QuickAddPanel({ cat, feeds, onMutated }: Props) {
           {expanded === 'pee' ? (
             <View>
               <Text style={{ fontSize: 12, fontWeight: '700', color: '#56423C', marginBottom: 6 }}>
-                Объём
+                {t('event.volume')}
               </Text>
               <View style={{ flexDirection: 'row', gap: 6 }}>
                 {PEE_OPTIONS.map((opt) => {
@@ -252,7 +248,7 @@ export function QuickAddPanel({ cat, feeds, onMutated }: Props) {
                       }}
                     >
                       <Text style={{ fontSize: 12, fontWeight: '600', color: meta.main }}>
-                        {PEE_VOLUME_LABELS[opt]}
+                        {t(`pee.${opt}`)}
                       </Text>
                     </Pressable>
                   );
@@ -264,7 +260,7 @@ export function QuickAddPanel({ cat, feeds, onMutated }: Props) {
           {expanded === 'food' ? (
             <View>
               <Text style={{ fontSize: 12, fontWeight: '700', color: '#56423C', marginBottom: 6 }}>
-                Корм
+                {t('event.feed')}
               </Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }}>
                 <View style={{ flexDirection: 'row', gap: 6 }}>
@@ -294,7 +290,7 @@ export function QuickAddPanel({ cat, feeds, onMutated }: Props) {
               <View style={{ gap: 10, marginTop: 4 }}>
                 <View>
                   <Text style={{ fontSize: 11, color: '#56423C', marginBottom: 4 }}>
-                    Количество ({FEED_UNIT_LABELS[unit]})
+                    {t('event.amount', { unit: t(`units.${unit}`) })}
                   </Text>
                   <QuantityStepper
                     value={amount}
@@ -302,20 +298,20 @@ export function QuickAddPanel({ cat, feeds, onMutated }: Props) {
                     step={unit === 'spoon' ? 0.5 : 1}
                     min={0}
                     max={100}
-                    unitLabel={FEED_UNIT_LABELS[unit]}
+                    unitLabel={t(`units.${unit}`)}
                     quickValues={unit === 'spoon' ? SPOON_QUICK : GRAM_QUICK}
                     accent={meta.main}
                   />
                 </View>
                 <View>
-                  <Text style={{ fontSize: 11, color: '#56423C', marginBottom: 4 }}>Приёмов</Text>
+                  <Text style={{ fontSize: 11, color: '#56423C', marginBottom: 4 }}>{t('event.mealsSection')}</Text>
                   <QuantityStepper
                     value={meals}
                     onChange={setMeals}
                     step={1}
                     min={1}
                     max={10}
-                    unitLabel={mealsLabel(meals)}
+                    unitLabel={t('event.meals', { count: meals })}
                     quickValues={MEALS_QUICK}
                     accent={meta.main}
                     chipTimes
@@ -331,7 +327,7 @@ export function QuickAddPanel({ cat, feeds, onMutated }: Props) {
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                   <Image source={{ uri: photoUri }} style={{ width: 44, height: 44, borderRadius: 8 }} />
                   <Pressable onPress={() => setPhotoUri(null)}>
-                    <Text style={{ fontSize: 12, color: '#BA1A1A', fontWeight: '600' }}>Убрать фото</Text>
+                    <Text style={{ fontSize: 12, color: '#BA1A1A', fontWeight: '600' }}>{t('event.removePhoto')}</Text>
                   </Pressable>
                 </View>
               ) : (
@@ -345,7 +341,7 @@ export function QuickAddPanel({ cat, feeds, onMutated }: Props) {
                     alignSelf: 'flex-start',
                   }}
                 >
-                  <Text style={{ fontSize: 12, fontWeight: '600', color: '#56423C' }}>+ Фото</Text>
+                  <Text style={{ fontSize: 12, fontWeight: '600', color: '#56423C' }}>{t('event.addPhotoShort')}</Text>
                 </Pressable>
               )}
             </View>
@@ -359,14 +355,14 @@ export function QuickAddPanel({ cat, feeds, onMutated }: Props) {
               marginTop: 10,
             }}
           >
-            <Text style={{ fontSize: 12, fontWeight: '600', color: '#56423C' }}>Неточное</Text>
+            <Text style={{ fontSize: 12, fontWeight: '600', color: '#56423C' }}>{t('event.uncertainShort')}</Text>
             <Switch value={uncertain} onValueChange={setUncertain} />
           </View>
 
           <TextInput
             value={comment}
             onChangeText={setComment}
-            placeholder="Комментарий (детали, вне лотка, кровь…)"
+            placeholder={t('event.commentPlaceholderShort')}
             placeholderTextColor="#A49C93"
             style={{
               backgroundColor: '#FCF2E8',
@@ -392,7 +388,7 @@ export function QuickAddPanel({ cat, feeds, onMutated }: Props) {
             }}
           >
             <Text style={{ fontSize: 14, fontWeight: '700', color: '#fff' }}>
-              {saving ? 'Сохранение…' : 'Сохранить событие'}
+              {saving ? t('event.saving') : t('event.saveEvent')}
             </Text>
           </Pressable>
         </View>
@@ -403,7 +399,7 @@ export function QuickAddPanel({ cat, feeds, onMutated }: Props) {
           <TextInput
             value={noteText}
             onChangeText={setNoteText}
-            placeholder="Заметка: что случилось?"
+            placeholder={t('quickAdd.notePlaceholder')}
             placeholderTextColor="#A49C93"
             style={{
               flex: 1,

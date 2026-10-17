@@ -26,36 +26,14 @@ export const Design = {
   },
 } as const;
 
-export const ACTION_META: Record<
-  'poop' | 'pee' | 'food',
-  { label: string; emoji: string; main: string; soft: string }
-> = {
-  food: { label: 'Поела', emoji: '🍽', main: Design.action.food.main, soft: Design.action.food.soft },
-  pee: { label: 'Пописяла', emoji: '💧', main: Design.action.pee.main, soft: Design.action.pee.soft },
-  poop: { label: 'Покакала', emoji: '🐾', main: Design.action.poop.main, soft: Design.action.poop.soft },
+export const ACTION_META: Record<'poop' | 'pee' | 'food', { emoji: string; main: string; soft: string }> = {
+  food: { emoji: '🍽', main: Design.action.food.main, soft: Design.action.food.soft },
+  pee: { emoji: '💧', main: Design.action.pee.main, soft: Design.action.pee.soft },
+  poop: { emoji: '🐾', main: Design.action.poop.main, soft: Design.action.poop.soft },
 };
 
 export const NOTE_META = {
-  label: 'Заметка',
   emoji: '📝',
   main: Design.action.note.main,
   soft: Design.action.note.soft,
 } as const;
-
-export const STOOL_LABELS: Record<string, string> = {
-  normal: 'Норма',
-  hard: 'Тугой-сухой',
-  liquid: 'Жидкий',
-  unusual: 'Необычный',
-};
-
-export const PEE_VOLUME_LABELS: Record<string, string> = {
-  low: 'Мало',
-  normal: 'Норма',
-  high: 'Много',
-};
-
-export const FEED_UNIT_LABELS: Record<string, string> = {
-  spoon: 'лож.',
-  gram: 'г',
-};

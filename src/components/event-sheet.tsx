@@ -9,15 +9,11 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
-import { QuantityStepper, mealsLabel } from '@/components/quantity-stepper';
+import { QuantityStepper } from '@/components/quantity-stepper';
 import { TimePill, type DateTimeValue } from '@/components/time-pill';
-import {
-  ACTION_META,
-  FEED_UNIT_LABELS,
-  PEE_VOLUME_LABELS,
-  STOOL_LABELS,
-} from '@/constants/design';
+import { ACTION_META } from '@/constants/design';
 import { savePhotoAsset } from '@/db/repositories';
 import type {
   DayEvent,
@@ -44,6 +40,7 @@ const GRAM_QUICK = [4, 6, 10, 15, 20, 30, 35];
 const MEALS_QUICK = [1, 2, 3];
 
 export function EventSheet({ event, feeds, catColor, onSave, onDelete, onClose }: Props) {
+  const { t } = useTranslation();
   const [type, setType] = useState<EventType>(event.type);
   const [dateTime, setDateTime] = useState<DateTimeValue>({
     date: event.eventDate,
@@ -58,7 +55,6 @@ export function EventSheet({ event, feeds, catColor, onSave, onDelete, onClose }
   const [note, setNote] = useState(event.note ?? '');
   const [photoUri, setPhotoUri] = useState<string | null>(event.photoUri);
 
-  const meta = ACTION_META[type];
   const canPhoto = type === 'poop' || type === 'pee';
   const unit = feeds.find((f) => f.id === feedId)?.unit ?? 'gram';
 
@@ -102,20 +98,20 @@ export function EventSheet({ event, feeds, catColor, onSave, onDelete, onClose }
         >
           <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 32 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
-              <Text style={{ fontSize: 17, fontWeight: '700', color: '#1F1B15' }}>Событие</Text>
+              <Text style={{ fontSize: 17, fontWeight: '700', color: '#1F1B15' }}>{t('event.title')}</Text>
               <Pressable onPress={onClose} hitSlop={8}>
                 <Text style={{ fontSize: 15, color: '#56423C' }}>✕</Text>
               </Pressable>
             </View>
 
             <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
-              {(Object.keys(ACTION_META) as EventType[]).map((t) => {
-                const m = ACTION_META[t];
-                const active = t === type;
+              {(Object.keys(ACTION_META) as EventType[]).map((et) => {
+                const m = ACTION_META[et];
+                const active = et === type;
                 return (
                   <Pressable
-                    key={t}
-                    onPress={() => setType(t)}
+                    key={et}
+                    onPress={() => setType(et)}
                     style={{
                       flex: 1,
                       alignItems: 'center',
@@ -128,7 +124,7 @@ export function EventSheet({ event, feeds, catColor, onSave, onDelete, onClose }
                   >
                     <Text style={{ fontSize: 16 }}>{m.emoji}</Text>
                     <Text style={{ fontSize: 11, fontWeight: '700', color: active ? m.main : '#56423C' }}>
-                      {m.label}
+                      {t(`action.${et}`)}
                     </Text>
                   </Pressable>
                 );
@@ -147,7 +143,7 @@ export function EventSheet({ event, feeds, catColor, onSave, onDelete, onClose }
               }}
             >
               <Text style={{ fontSize: 13, fontWeight: '700', color: '#56423C' }}>
-                Неточное (сомневаюсь в дне/времени/коте)
+                {t('event.uncertainFull')}
               </Text>
               <Switch value={uncertain} onValueChange={setUncertain} />
             </View>
@@ -155,7 +151,7 @@ export function EventSheet({ event, feeds, catColor, onSave, onDelete, onClose }
             {type === 'poop' ? (
               <View style={{ marginTop: 8 }}>
                 <Text style={{ fontSize: 13, fontWeight: '700', color: '#56423C', marginBottom: 8 }}>
-                  Стул
+                  {t('event.stool')}
                 </Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                   {STOOL_OPTIONS.map((opt) => {
@@ -174,7 +170,7 @@ export function EventSheet({ event, feeds, catColor, onSave, onDelete, onClose }
                         }}
                       >
                         <Text style={{ fontSize: 13, fontWeight: '600', color: ACTION_META.poop.main }}>
-                          {STOOL_LABELS[opt]}
+                          {t(`stool.${opt}`)}
                         </Text>
                       </Pressable>
                     );
@@ -186,7 +182,7 @@ export function EventSheet({ event, feeds, catColor, onSave, onDelete, onClose }
             {type === 'pee' ? (
               <View style={{ marginTop: 8 }}>
                 <Text style={{ fontSize: 13, fontWeight: '700', color: '#56423C', marginBottom: 8 }}>
-                  Объём
+                  {t('event.volume')}
                 </Text>
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   {PEE_OPTIONS.map((opt) => {
@@ -206,7 +202,7 @@ export function EventSheet({ event, feeds, catColor, onSave, onDelete, onClose }
                         }}
                       >
                         <Text style={{ fontSize: 13, fontWeight: '600', color: ACTION_META.pee.main }}>
-                          {PEE_VOLUME_LABELS[opt]}
+                          {t(`pee.${opt}`)}
                         </Text>
                       </Pressable>
                     );
@@ -218,7 +214,7 @@ export function EventSheet({ event, feeds, catColor, onSave, onDelete, onClose }
             {type === 'food' ? (
               <View style={{ marginTop: 8 }}>
                 <Text style={{ fontSize: 13, fontWeight: '700', color: '#56423C', marginBottom: 8 }}>
-                  Корм
+                  {t('event.feed')}
                 </Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                   {feeds.map((f) => {
@@ -246,7 +242,7 @@ export function EventSheet({ event, feeds, catColor, onSave, onDelete, onClose }
                 <View style={{ gap: 10, marginTop: 10 }}>
                   <View>
                     <Text style={{ fontSize: 12, color: '#56423C', marginBottom: 4 }}>
-                      Количество ({FEED_UNIT_LABELS[unit]})
+                      {t('event.amount', { unit: t(`units.${unit}`) })}
                     </Text>
                     <QuantityStepper
                       value={amount}
@@ -254,20 +250,20 @@ export function EventSheet({ event, feeds, catColor, onSave, onDelete, onClose }
                       step={unit === 'spoon' ? 0.5 : 1}
                       min={0}
                       max={100}
-                      unitLabel={FEED_UNIT_LABELS[unit]}
+                      unitLabel={t(`units.${unit}`)}
                       quickValues={unit === 'spoon' ? SPOON_QUICK : GRAM_QUICK}
                       accent={ACTION_META.food.main}
                     />
                   </View>
                   <View>
-                    <Text style={{ fontSize: 12, color: '#56423C', marginBottom: 4 }}>Приёмов</Text>
+                    <Text style={{ fontSize: 12, color: '#56423C', marginBottom: 4 }}>{t('event.mealsSection')}</Text>
                     <QuantityStepper
                       value={meals}
                       onChange={setMeals}
                       step={1}
                       min={1}
                       max={10}
-                      unitLabel={mealsLabel(meals)}
+                      unitLabel={t('event.meals', { count: meals })}
                       quickValues={MEALS_QUICK}
                       accent={ACTION_META.food.main}
                       chipTimes
@@ -280,13 +276,13 @@ export function EventSheet({ event, feeds, catColor, onSave, onDelete, onClose }
             {canPhoto ? (
               <View style={{ marginTop: 14 }}>
                 <Text style={{ fontSize: 13, fontWeight: '700', color: '#56423C', marginBottom: 8 }}>
-                  Фото
+                  {t('event.photo')}
                 </Text>
                 {photoUri ? (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                     <Image source={{ uri: photoUri }} style={{ width: 56, height: 56, borderRadius: 10 }} />
                     <Pressable onPress={() => setPhotoUri(null)}>
-                      <Text style={{ fontSize: 13, color: '#BA1A1A', fontWeight: '600' }}>Убрать</Text>
+                      <Text style={{ fontSize: 13, color: '#BA1A1A', fontWeight: '600' }}>{t('event.removePhotoShort')}</Text>
                     </Pressable>
                   </View>
                 ) : (
@@ -300,7 +296,7 @@ export function EventSheet({ event, feeds, catColor, onSave, onDelete, onClose }
                       alignSelf: 'flex-start',
                     }}
                   >
-                    <Text style={{ fontSize: 13, fontWeight: '600', color: '#56423C' }}>+ Добавить фото</Text>
+                    <Text style={{ fontSize: 13, fontWeight: '600', color: '#56423C' }}>{t('event.addPhoto')}</Text>
                   </Pressable>
                 )}
               </View>
@@ -309,13 +305,13 @@ export function EventSheet({ event, feeds, catColor, onSave, onDelete, onClose }
             <Text
               style={{ fontSize: 13, fontWeight: '700', color: '#56423C', marginTop: 14, marginBottom: 6 }}
             >
-              Комментарий
+              {t('event.comment')}
             </Text>
             <TextInput
               value={note}
               onChangeText={setNote}
               multiline
-              placeholder="Детали, наблюдения…"
+              placeholder={t('event.commentPlaceholder')}
               placeholderTextColor="#A49C93"
               style={{
                 backgroundColor: '#FCF2E8',
@@ -339,7 +335,7 @@ export function EventSheet({ event, feeds, catColor, onSave, onDelete, onClose }
                   backgroundColor: '#FFDAD6',
                 }}
               >
-                <Text style={{ fontSize: 14, fontWeight: '700', color: '#93000A' }}>Удалить</Text>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: '#93000A' }}>{t('common.delete')}</Text>
               </Pressable>
               <Pressable
                 onPress={save}
@@ -351,12 +347,12 @@ export function EventSheet({ event, feeds, catColor, onSave, onDelete, onClose }
                   backgroundColor: catColor,
                 }}
               >
-                <Text style={{ fontSize: 14, fontWeight: '700', color: '#fff' }}>Сохранить</Text>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: '#fff' }}>{t('common.save')}</Text>
               </Pressable>
             </View>
 
             <Text style={{ fontSize: 11, color: '#A49C93', marginTop: 10, textAlign: 'center' }}>
-              {meta.label} · {dateTime.date}
+              {t(`action.${type}`)} · {dateTime.date}
             </Text>
           </ScrollView>
         </Pressable>

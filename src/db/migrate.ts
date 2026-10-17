@@ -1,5 +1,6 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
+import i18n from '@/i18n';
 import { nowIso } from '@/utils/id';
 
 const DATABASE_VERSION = 2;
@@ -94,11 +95,11 @@ CREATE TABLE IF NOT EXISTS app_meta (
     const ts = nowIso();
     await db.runAsync(
       `INSERT INTO feeds (id, name, kind, unit, is_preset, created_at, updated_at) VALUES (?, ?, ?, ?, 1, ?, ?)`,
-      SEED_FEED_WET, 'Мокрый корм (ложки)', 'wet', 'spoon', ts, ts
+      SEED_FEED_WET, i18n.t('feed.wetName'), 'wet', 'spoon', ts, ts
     );
     await db.runAsync(
       `INSERT INTO feeds (id, name, kind, unit, is_preset, created_at, updated_at) VALUES (?, ?, ?, ?, 1, ?, ?)`,
-      SEED_FEED_DRY, 'Сухой корм (граммы)', 'dry', 'gram', ts, ts
+      SEED_FEED_DRY, i18n.t('feed.dryName'), 'dry', 'gram', ts, ts
     );
     await db.runAsync(
       `INSERT INTO app_meta (key, value) VALUES ('seeded_at', ?)`,

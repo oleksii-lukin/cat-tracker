@@ -1,0 +1,6 @@
+{
+  "ios": {
+    "NSPhotoLibraryUsageDescription": "L’app utilise des photos pour joindre des clichés de selles et d’autres observations aux événements.",
+    "NSCameraUsageDescription": "L’app utilise l’appareil photo pour prendre des clichés de selles et d’autres observations pour les événements."
+  }
+}

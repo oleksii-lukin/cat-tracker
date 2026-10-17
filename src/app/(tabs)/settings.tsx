@@ -9,6 +9,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { CatAvatar } from '@/components/cat-avatar';
 import { CoatFrame } from '@/components/coat-frame';
@@ -25,18 +26,44 @@ import {
   updateFeed,
 } from '@/db/repositories';
 import { useApp } from '@/context/app-context';
+import { LANGUAGE_AUTO, type LanguagePref } from '@/i18n';
 import type { Cat, Feed, Sex, WeightEntry } from '@/types/domain';
-import { formatDayRu, formatWeightGrams, todayKey } from '@/utils/dates';
+import { formatDay, formatWeightGrams, todayKey } from '@/utils/dates';
 
-const SEX_OPTIONS: { value: Sex; label: string }[] = [
-  { value: 'male', label: 'М' },
-  { value: 'female', label: 'Ж' },
-  { value: 'unknown', label: '—' },
+const SEX_OPTIONS: { value: Sex; labelKey: 'settings.sexMale' | 'settings.sexFemale' | null }[] = [
+  { value: 'male', labelKey: 'settings.sexMale' },
+  { value: 'female', labelKey: 'settings.sexFemale' },
+  { value: 'unknown', labelKey: null },
+];
+
+const LANGUAGE_OPTIONS: {
+  value: LanguagePref;
+  labelKey:
+    | 'settings.langAuto'
+    | 'settings.langRu'
+    | 'settings.langUk'
+    | 'settings.langBe'
+    | 'settings.langEn'
+    | 'settings.langEs'
+    | 'settings.langDe'
+    | 'settings.langIt'
+    | 'settings.langFr';
+}[] = [
+  { value: LANGUAGE_AUTO, labelKey: 'settings.langAuto' },
+  { value: 'ru', labelKey: 'settings.langRu' },
+  { value: 'uk', labelKey: 'settings.langUk' },
+  { value: 'be', labelKey: 'settings.langBe' },
+  { value: 'en', labelKey: 'settings.langEn' },
+  { value: 'es', labelKey: 'settings.langEs' },
+  { value: 'de', labelKey: 'settings.langDe' },
+  { value: 'it', labelKey: 'settings.langIt' },
+  { value: 'fr', labelKey: 'settings.langFr' },
 ];
 
 export default function SettingsScreen() {
+  const { t } = useTranslation();
   const db = useSQLiteContext();
-  const { cats, feeds, currentCat, refreshCats, refreshFeeds } = useApp();
+  const { cats, feeds, currentCat, refreshCats, refreshFeeds, languagePref, setLanguage } = useApp();
   const [catModal, setCatModal] = useState(false);
   const [editingCat, setEditingCat] = useState<Cat | null>(null);
   const [catName, setCatName] = useState('');
@@ -105,10 +132,10 @@ export default function SettingsScreen() {
   };
 
   const deleteCat = (cat: Cat) => {
-    Alert.alert(`Удалить ${cat.name}?`, 'Связанные события останутся в базе, но профиль скроется.', [
-      { text: 'Отмена', style: 'cancel' },
+    Alert.alert(t('deleteCat.title', { name: cat.name }), t('deleteCat.message'), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Удалить',
+        text: t('common.delete'),
         style: 'destructive',
         onPress: async () => {
           await softDeleteCat(db, cat.id);
@@ -163,6 +190,16 @@ export default function SettingsScreen() {
       ? getCoat(currentCat.color)
       : DEFAULT_COAT;
 
+  const sexLabel = (sex: Sex) =>
+    sex === 'male' ? t('settings.sexMale') : sex === 'female' ? t('settings.sexFemale') : t('settings.sexNotSpecified');
+
+  const languageButtonStyle = (active: boolean) => ({
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    backgroundColor: active ? '#9D3E1A' : '#F6ECE3',
+  });
+
   return (
     <CoatFrame
       coat={previewCoat}
@@ -189,21 +226,21 @@ export default function SettingsScreen() {
               elevation: 4,
             }}
           >
-            <Text style={{ fontSize: 18, fontWeight: '700', color: '#1F1B15' }}>Настройки</Text>
+            <Text style={{ fontSize: 18, fontWeight: '700', color: '#1F1B15' }}>{t('tabs.settings')}</Text>
           </View>
           <Pressable
             onPress={openCreateCat}
             style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: '#9D3E1A' }}
           >
-            <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>+ Кот</Text>
+            <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>{t('settings.addCat')}</Text>
           </Pressable>
         </View>
       }
     >
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
-        <Text style={{ fontSize: 14, fontWeight: '700', color: '#56423C', marginBottom: 8 }}>Коты</Text>
+        <Text style={{ fontSize: 14, fontWeight: '700', color: '#56423C', marginBottom: 8 }}>{t('settings.cats')}</Text>
         {cats.length === 0 ? (
-          <Text style={{ fontSize: 13, color: '#A49C93', marginBottom: 16 }}>Котов пока нет</Text>
+          <Text style={{ fontSize: 13, color: '#A49C93', marginBottom: 16 }}>{t('settings.noCats')}</Text>
         ) : null}
         {cats.map((cat) => (
           <Pressable
@@ -225,7 +262,7 @@ export default function SettingsScreen() {
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 15, fontWeight: '700', color: '#1F1B15' }}>{cat.name}</Text>
               <Text style={{ fontSize: 12, color: '#56423C' }}>
-                {cat.sex === 'male' ? 'М' : cat.sex === 'female' ? 'Ж' : 'пол не указан'}
+                {sexLabel(cat.sex)}
                 {cat.birthDate ? ` · ${cat.birthDate}` : ''}
               </Text>
             </View>
@@ -242,12 +279,12 @@ export default function SettingsScreen() {
             marginBottom: 8,
           }}
         >
-          <Text style={{ fontSize: 14, fontWeight: '700', color: '#56423C' }}>Корма</Text>
+          <Text style={{ fontSize: 14, fontWeight: '700', color: '#56423C' }}>{t('settings.feedsSection')}</Text>
           <Pressable
             onPress={openCreateFeed}
             style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: '#F6ECE3' }}
           >
-            <Text style={{ color: '#9D3E1A', fontSize: 13, fontWeight: '700' }}>+ Корм</Text>
+            <Text style={{ color: '#9D3E1A', fontSize: 13, fontWeight: '700' }}>{t('settings.addFeed')}</Text>
           </Pressable>
         </View>
         {feeds.map((feed) => (
@@ -269,34 +306,44 @@ export default function SettingsScreen() {
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 14, fontWeight: '600', color: '#1F1B15' }}>{feed.name}</Text>
               <Text style={{ fontSize: 12, color: '#56423C' }}>
-                {feed.kind === 'wet' ? 'мокрый' : 'сухой'} ·{' '}
-                {feed.unit === 'spoon' ? 'ложки' : 'граммы'}
-                {feed.isPreset ? ' · стандарт' : ''}
+                {feed.kind === 'wet' ? t('settings.kindWetLower') : t('settings.kindDryLower')} ·{' '}
+                {feed.unit === 'spoon' ? t('settings.unitSpoonsLower') : t('settings.unitGramsLower')}
+                {feed.isPreset ? ` · ${t('settings.preset')}` : ''}
               </Text>
             </View>
-            {feed.isPreset ? (
-              <Pressable
-                onPress={async () => {
-                  await softDeleteFeed(db, feed.id);
-                  refreshFeeds();
-                }}
-                style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, backgroundColor: '#FFDAD6' }}
-              >
-                <Text style={{ fontSize: 12, fontWeight: '700', color: '#93000A' }}>Скрыть</Text>
-              </Pressable>
-            ) : (
-              <Pressable
-                onPress={async () => {
-                  await softDeleteFeed(db, feed.id);
-                  refreshFeeds();
-                }}
-                style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, backgroundColor: '#FFDAD6' }}
-              >
-                <Text style={{ fontSize: 12, fontWeight: '700', color: '#93000A' }}>Удалить</Text>
-              </Pressable>
-            )}
+            <Pressable
+              onPress={async () => {
+                await softDeleteFeed(db, feed.id);
+                refreshFeeds();
+              }}
+              style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, backgroundColor: '#FFDAD6' }}
+            >
+              <Text style={{ fontSize: 12, fontWeight: '700', color: '#93000A' }}>
+                {feed.isPreset ? t('common.hide') : t('common.delete')}
+              </Text>
+            </Pressable>
           </Pressable>
         ))}
+
+        <Text style={{ fontSize: 14, fontWeight: '700', color: '#56423C', marginTop: 20, marginBottom: 8 }}>
+          {t('settings.languageSection')}
+        </Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+          {LANGUAGE_OPTIONS.map((opt) => {
+            const active = opt.value === languagePref;
+            return (
+              <Pressable
+                key={opt.value}
+                onPress={() => void setLanguage(opt.value)}
+                style={languageButtonStyle(active)}
+              >
+                <Text style={{ fontSize: 13, fontWeight: '700', color: active ? '#fff' : '#56423C' }}>
+                  {t(opt.labelKey)}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
       </ScrollView>
 
       <Modal visible={catModal} transparent animationType="slide" onRequestClose={() => setCatModal(false)}>
@@ -315,14 +362,14 @@ export default function SettingsScreen() {
           >
             <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 32 }}>
               <Text style={{ fontSize: 17, fontWeight: '700', color: '#1F1B15', marginBottom: 14 }}>
-                {editingCat ? `Редактировать: ${editingCat.name}` : 'Новый кот'}
+                {editingCat ? t('settings.editCat', { name: editingCat.name }) : t('settings.newCat')}
               </Text>
 
-              <Text style={{ fontSize: 12, fontWeight: '700', color: '#56423C', marginBottom: 6 }}>Имя</Text>
+              <Text style={{ fontSize: 12, fontWeight: '700', color: '#56423C', marginBottom: 6 }}>{t('settings.nameLabel')}</Text>
               <TextInput
                 value={catName}
                 onChangeText={setCatName}
-                placeholder="Барсик"
+                placeholder={t('settings.namePlaceholder')}
                 placeholderTextColor="#A49C93"
                 style={{
                   backgroundColor: '#FCF2E8',
@@ -335,7 +382,7 @@ export default function SettingsScreen() {
                 }}
               />
 
-              <Text style={{ fontSize: 12, fontWeight: '700', color: '#56423C', marginBottom: 6 }}>Пол</Text>
+              <Text style={{ fontSize: 12, fontWeight: '700', color: '#56423C', marginBottom: 6 }}>{t('settings.sexLabel')}</Text>
               <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
                 {SEX_OPTIONS.map((opt) => {
                   const active = opt.value === catSex;
@@ -358,7 +405,7 @@ export default function SettingsScreen() {
                           color: active ? getCoat(catColor).onAccent : '#56423C',
                         }}
                       >
-                        {opt.label}
+                        {opt.labelKey ? t(opt.labelKey) : '—'}
                       </Text>
                     </Pressable>
                   );
@@ -366,7 +413,7 @@ export default function SettingsScreen() {
               </View>
 
               <Text style={{ fontSize: 12, fontWeight: '700', color: '#56423C', marginBottom: 6 }}>
-                Дата рождения (ГГГГ-ММ-ДД)
+                {t('settings.birthLabel', { format: t('settings.dateFormat') })}
               </Text>
               <TextInput
                 value={catBirth}
@@ -384,7 +431,7 @@ export default function SettingsScreen() {
                 }}
               />
 
-              <Text style={{ fontSize: 12, fontWeight: '700', color: '#56423C', marginBottom: 6 }}>Шерсть</Text>
+              <Text style={{ fontSize: 12, fontWeight: '700', color: '#56423C', marginBottom: 6 }}>{t('settings.coatLabel')}</Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 8 }}>
                 {COAT_LIST.map((coat) => {
                   const active = coat.id === catColor;
@@ -407,13 +454,13 @@ export default function SettingsScreen() {
                 })}
               </View>
               <Text style={{ fontSize: 12, color: '#56423C', marginBottom: 16 }}>
-                {getCoat(catColor).label}
+                {t(`coat.${getCoat(catColor).id}`)}
               </Text>
 
               {editingCat ? (
                 <>
                   <Text style={{ fontSize: 14, fontWeight: '700', color: '#56423C', marginBottom: 8 }}>
-                    История веса
+                    {t('settings.weightHistory')}
                   </Text>
                   {weights.map((w) => (
                     <View
@@ -433,14 +480,14 @@ export default function SettingsScreen() {
                       <Text style={{ fontSize: 13, color: '#1F1B15', fontWeight: '600' }}>
                         {formatWeightGrams(w.weightGrams)}
                       </Text>
-                      <Text style={{ fontSize: 12, color: '#56423C' }}>{formatDayRu(w.measuredOn)}</Text>
+                      <Text style={{ fontSize: 12, color: '#56423C' }}>{formatDay(w.measuredOn)}</Text>
                     </View>
                   ))}
                   <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
                     <TextInput
                       value={weightGrams}
                       onChangeText={setWeightGrams}
-                      placeholder="вес, г"
+                      placeholder={t('settings.weightPlaceholder')}
                       keyboardType="decimal-pad"
                       placeholderTextColor="#A49C93"
                       style={{
@@ -456,7 +503,7 @@ export default function SettingsScreen() {
                     <TextInput
                       value={weightDate}
                       onChangeText={setWeightDate}
-                      placeholder="ГГГГ-ММ-ДД"
+                      placeholder={t('settings.dateFormat')}
                       placeholderTextColor="#A49C93"
                       style={{
                         flex: 1,
@@ -494,7 +541,7 @@ export default function SettingsScreen() {
                       backgroundColor: '#FFDAD6',
                     }}
                   >
-                    <Text style={{ fontSize: 14, fontWeight: '700', color: '#93000A' }}>Удалить</Text>
+                    <Text style={{ fontSize: 14, fontWeight: '700', color: '#93000A' }}>{t('common.delete')}</Text>
                   </Pressable>
                 ) : null}
                 <Pressable
@@ -508,7 +555,7 @@ export default function SettingsScreen() {
                   }}
                 >
                   <Text style={{ fontSize: 14, fontWeight: '700', color: getCoat(catColor).onAccent }}>
-                    {editingCat ? 'Сохранить' : 'Добавить'}
+                    {editingCat ? t('common.save') : t('common.add')}
                   </Text>
                 </Pressable>
               </View>
@@ -532,10 +579,10 @@ export default function SettingsScreen() {
           >
             <View style={{ padding: 20, paddingBottom: 32 }}>
               <Text style={{ fontSize: 17, fontWeight: '700', color: '#1F1B15', marginBottom: 14 }}>
-                {editingFeed ? 'Корм' : 'Новый корм'}
+                {editingFeed ? t('settings.feedEdit') : t('settings.newFeed')}
               </Text>
 
-              <Text style={{ fontSize: 12, fontWeight: '700', color: '#56423C', marginBottom: 6 }}>Название</Text>
+              <Text style={{ fontSize: 12, fontWeight: '700', color: '#56423C', marginBottom: 6 }}>{t('settings.feedNameLabel')}</Text>
               <TextInput
                 value={feedName}
                 onChangeText={setFeedName}
@@ -552,12 +599,12 @@ export default function SettingsScreen() {
                 }}
               />
 
-              <Text style={{ fontSize: 12, fontWeight: '700', color: '#56423C', marginBottom: 6 }}>Вид</Text>
+              <Text style={{ fontSize: 12, fontWeight: '700', color: '#56423C', marginBottom: 6 }}>{t('settings.feedKindLabel')}</Text>
               <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
                 {(
                   [
-                    { value: 'wet', label: 'Мокрый' },
-                    { value: 'dry', label: 'Сухой' },
+                    { value: 'wet', labelKey: 'settings.kindWet' },
+                    { value: 'dry', labelKey: 'settings.kindDry' },
                   ] as const
                 ).map((opt) => {
                   const active = opt.value === feedKind;
@@ -577,19 +624,19 @@ export default function SettingsScreen() {
                       }}
                     >
                       <Text style={{ fontSize: 14, fontWeight: '700', color: active ? '#fff' : '#56423C' }}>
-                        {opt.label}
+                        {t(opt.labelKey)}
                       </Text>
                     </Pressable>
                   );
                 })}
               </View>
 
-              <Text style={{ fontSize: 12, fontWeight: '700', color: '#56423C', marginBottom: 6 }}>Единица</Text>
+              <Text style={{ fontSize: 12, fontWeight: '700', color: '#56423C', marginBottom: 6 }}>{t('settings.feedUnitLabel')}</Text>
               <View style={{ flexDirection: 'row', gap: 8 }}>
                 {(
                   [
-                    { value: 'spoon', label: 'Ложки' },
-                    { value: 'gram', label: 'Граммы' },
+                    { value: 'spoon', labelKey: 'settings.unitSpoons' },
+                    { value: 'gram', labelKey: 'settings.unitGrams' },
                   ] as const
                 ).map((opt) => {
                   const active = opt.value === feedUnit;
@@ -606,7 +653,7 @@ export default function SettingsScreen() {
                       }}
                     >
                       <Text style={{ fontSize: 14, fontWeight: '700', color: active ? '#fff' : '#56423C' }}>
-                        {opt.label}
+                        {t(opt.labelKey)}
                       </Text>
                     </Pressable>
                   );
@@ -624,7 +671,7 @@ export default function SettingsScreen() {
                 }}
               >
                 <Text style={{ fontSize: 14, fontWeight: '700', color: '#fff' }}>
-                  {editingFeed ? 'Сохранить' : 'Добавить'}
+                  {editingFeed ? t('common.save') : t('common.add')}
                 </Text>
               </Pressable>
             </View>
