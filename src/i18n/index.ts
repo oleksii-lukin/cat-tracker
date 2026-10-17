@@ -1,5 +1,5 @@
 import { getLocales } from 'expo-localization';
-import i18next from 'i18next';
+import i18next, { use as i18nextUse } from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
 import { be } from './be';
@@ -46,7 +46,7 @@ export const PRESET_FEED_NAMES: Record<'wet' | 'dry', Record<Language, string>> 
   },
 };
 
-void i18next.use(initReactI18next).init({
+void i18nextUse(initReactI18next).init({
   resources: {
     ru: { translation: ru },
     uk: { translation: uk },

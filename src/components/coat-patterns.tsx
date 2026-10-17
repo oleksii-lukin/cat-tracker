@@ -1,13 +1,12 @@
 import React, { useId } from 'react';
 import Svg, { Circle, Defs, Ellipse, Path, Pattern, Rect } from 'react-native-svg';
-import type { DimensionValue } from 'react-native';
 
 import type { Coat } from '@/constants/coats';
 
 interface Props {
   coat: Coat;
-  width: DimensionValue;
-  height: DimensionValue;
+  width: number;
+  height: number;
 }
 
 const TILE = 48;

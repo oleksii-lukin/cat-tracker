@@ -168,10 +168,9 @@ export function JournalFeed({ cat, feeds, revision, focusDay, onFocusDayHandled 
     if (focusDay && focusDay < from) {
       from = addDays(focusDay, -3);
     }
-    setGroups([]);
-    setHasMore(true);
-    setNextFromDay(null);
-    loadWindow(from, toDay, false);
+    void (async () => {
+      await loadWindow(from, toDay, false);
+    })();
     if (focusDay) onFocusDayHandled();
   }, [cat.id, revision, loadWindow, focusDay, onFocusDayHandled]);
 

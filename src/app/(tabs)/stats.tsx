@@ -65,11 +65,13 @@ export default function StatsScreen() {
     } finally {
       setLoading(false);
     }
-  }, [db, currentCat, days, revision]);
+  }, [db, currentCat, days]);
 
   useEffect(() => {
-    load();
-  }, [load, currentCat?.id, revision]);
+    void (async () => {
+      await load();
+    })();
+  }, [load, revision]);
 
   const feedKindLabel = (kind: FeedKind) =>
     kind === 'dry' ? t('stats.feedKindDry') : t('stats.feedKindWet');

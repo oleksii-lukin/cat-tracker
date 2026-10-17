@@ -8,7 +8,7 @@ import type { Cat, Feed } from '@/types/domain';
 
 const LANGUAGE_META_KEY = 'language';
 
-interface AppState {
+interface AppContextValue {
   cats: Cat[];
   feeds: Feed[];
   currentCat: Cat | null;
@@ -24,7 +24,7 @@ interface AppState {
   setLanguage: (pref: LanguagePref) => Promise<void>;
 }
 
-const AppContext = createContext<AppState | null>(null);
+const AppContext = createContext<AppContextValue | null>(null);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const db = useSQLiteContext();
@@ -101,8 +101,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   );
 
   useEffect(() => {
-    refreshCats();
-    refreshFeeds();
+    void (async () => {
+      await refreshCats();
+      await refreshFeeds();
+    })();
   }, [refreshCats, refreshFeeds]);
 
   const currentCat = useMemo(
@@ -110,7 +112,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [cats, currentCatId]
   );
 
-  const value = useMemo<AppState>(
+  const value = useMemo<AppContextValue>(
     () => ({
       cats,
       feeds,
@@ -132,7 +134,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
 
-export function useApp(): AppState {
+export function useApp(): AppContextValue {
   const ctx = useContext(AppContext);
   if (!ctx) {
     throw new Error('useApp must be used within AppProvider');
