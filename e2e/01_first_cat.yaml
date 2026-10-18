@@ -1,0 +1,36 @@
+# Критический путь 1: первое добавление кота.
+# Идемпотентен: если кот уже есть (прогон после 02/03), создание пропускается.
+# clearState НЕ используется — он стирает сохранённый URL Metro у dev-клиента.
+appId: com.llamerr.cattracker
+name: '01 First cat'
+---
+- extendedWaitUntil:
+    visible: 'Дневник'
+    timeout: 60000
+
+- tapOn: 'Настройки'
+
+- runFlow:
+    when:
+      visible: 'Котов пока нет'
+    commands:
+      - tapOn:
+          id: 'add-cat-button'
+      - extendedWaitUntil:
+          visible: 'Новый кот'
+          timeout: 10000
+      - tapOn:
+          id: 'cat-name-input'
+      - inputText: 'Тестя'
+      - hideKeyboard
+      - tapOn:
+          id: 'cat-save-button'
+      - extendedWaitUntil:
+          visible: 'Тестя'
+          timeout: 10000
+
+- assertVisible: 'Тестя'
+
+- tapOn: 'Дневник'
+
+- assertVisible: 'Быстрая запись'

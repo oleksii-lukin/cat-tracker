@@ -166,6 +166,7 @@ export function QuickAddPanel({ cat, feeds, onMutated }: Props) {
             <Pressable
               key={at}
               onPress={() => toggleExpanded(at)}
+              testID={`quickadd-${at}`}
               style={{
                 flex: 1,
                 alignItems: 'center',

@@ -230,6 +230,7 @@ export default function SettingsScreen() {
           </View>
           <Pressable
             onPress={openCreateCat}
+            testID="add-cat-button"
             style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: '#9D3E1A' }}
           >
             <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>{t('settings.addCat')}</Text>
@@ -371,6 +372,7 @@ export default function SettingsScreen() {
                 onChangeText={setCatName}
                 placeholder={t('settings.namePlaceholder')}
                 placeholderTextColor="#A49C93"
+                testID="cat-name-input"
                 style={{
                   backgroundColor: '#FCF2E8',
                   borderRadius: 12,
@@ -546,6 +548,7 @@ export default function SettingsScreen() {
                 ) : null}
                 <Pressable
                   onPress={saveCat}
+                  testID="cat-save-button"
                   style={{
                     flex: 1,
                     alignItems: 'center',
