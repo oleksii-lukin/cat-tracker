@@ -144,6 +144,7 @@ export const uk: typeof import('./ru').ru = {
     unitSpoons: 'Ложки',
     unitGrams: 'Грами',
     languageSection: 'Мова',
+    quickBlocks: 'Швидкі дії',
     langAuto: 'Авто (мова пристрою)',
     langRu: 'Русский',
     langUk: 'Українська',

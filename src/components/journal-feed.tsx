@@ -13,7 +13,8 @@ import { useTranslation } from 'react-i18next';
 
 import { EventCard } from '@/components/event-card';
 import { EventSheet } from '@/components/event-sheet';
-import { ACTION_META, NOTE_META } from '@/constants/design';
+import { NOTE_META } from '@/constants/design';
+import { getEventDef } from '@/domain/events';
 import { getCoat } from '@/constants/coats';
 import {
   createEvent,
@@ -326,7 +327,7 @@ export function JournalFeed({ cat, feeds, revision, focusDay, onFocusDayHandled 
                       width: 8,
                       height: 8,
                       borderRadius: 4,
-                      backgroundColor: ACTION_META.food.main,
+                      backgroundColor: getEventDef('food').main,
                     }}
                   />
                 ) : null}
@@ -369,7 +370,7 @@ export function JournalFeed({ cat, feeds, revision, focusDay, onFocusDayHandled 
           style={{ alignItems: 'center', paddingVertical: 14, marginBottom: 24 }}
         >
           {loading ? (
-            <ActivityIndicator color={ACTION_META.food.main} />
+            <ActivityIndicator color={getEventDef('food').main} />
           ) : (
             <Text style={{ fontSize: 13, fontWeight: '600', color: '#56423C' }}>
               {t('journal.showEarlierShort')}

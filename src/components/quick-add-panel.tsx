@@ -1,9 +1,8 @@
 import { useSQLiteContext } from 'expo-sqlite';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Image,
   Pressable,
-  ScrollView,
   Switch,
   Text,
   TextInput,
@@ -11,13 +10,21 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { QuantityStepper } from '@/components/quantity-stepper';
+import { EventFieldRenderer } from '@/components/event-fields';
 import { TimePill, type DateTimeValue } from '@/components/time-pill';
 import { CatAvatar } from '@/components/cat-avatar';
-import { ACTION_META, NOTE_META } from '@/constants/design';
+import { NOTE_META } from '@/constants/design';
 import { getCoat } from '@/constants/coats';
 import { createEvent, createNote, savePhotoAsset } from '@/db/repositories';
-import type { Cat, EventType, Feed, PeeVolume, StoolQuality } from '@/types/domain';
+import { useApp } from '@/context/app-context';
+import {
+  DEFAULT_DRAFT,
+  draftToFields,
+  getEventDef,
+  type EventDraft,
+} from '@/domain/events';
+import { QUICK_ACTIONS_REGISTRY, getEnabledSorted } from '@/domain/quick-actions';
+import type { Cat, EventType, Feed } from '@/types/domain';
 import { dayKey, formatTime } from '@/utils/dates';
 import { uuid } from '@/utils/id';
 import { pickPhoto } from '@/utils/photo-picker';
@@ -28,38 +35,31 @@ interface Props {
   onMutated: () => void;
 }
 
-const STOOL_OPTIONS: StoolQuality[] = ['normal', 'hard', 'liquid', 'unusual'];
-const PEE_OPTIONS: PeeVolume[] = ['low', 'normal', 'high'];
-const SPOON_QUICK = [0.5, 1, 1.5, 2, 3];
-const GRAM_QUICK = [4, 6, 10, 15, 20, 30, 35];
-const MEALS_QUICK = [1, 2, 3];
-
 export function QuickAddPanel({ cat, feeds, onMutated }: Props) {
   const { t } = useTranslation();
   const db = useSQLiteContext();
+  const { quickActions } = useApp();
+  const enabledQuickActions = useMemo(
+    () => getEnabledSorted(QUICK_ACTIONS_REGISTRY, quickActions),
+    [quickActions]
+  );
   const [expanded, setExpanded] = useState<EventType | null>(null);
   const [dateTime, setDateTime] = useState<DateTimeValue>(() => {
     const now = new Date();
     return { date: dayKey(now), time: formatTime(now) };
   });
-  const [stool, setStool] = useState<StoolQuality>('normal');
-  const [volume, setVolume] = useState<PeeVolume>('normal');
-  const [feedId, setFeedId] = useState<string | null>(null);
-  const [amount, setAmount] = useState(0);
-  const [meals, setMeals] = useState(1);
+  const [draft, setDraft] = useState<EventDraft>(DEFAULT_DRAFT);
   const [uncertain, setUncertain] = useState(false);
   const [comment, setComment] = useState('');
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [noteText, setNoteText] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const activeFeedId = feedId ?? feeds[0]?.id ?? null;
+  const patch = (p: Partial<EventDraft>) => setDraft((d) => ({ ...d, ...p }));
+  const activeFeedId = draft.feedId ?? feeds[0]?.id ?? null;
 
   const resetDraft = () => {
-    setStool('normal');
-    setVolume('normal');
-    setAmount(0);
-    setMeals(1);
+    setDraft({ ...DEFAULT_DRAFT, feedId: activeFeedId });
     setUncertain(false);
     setComment('');
     setPhotoUri(null);
@@ -67,11 +67,11 @@ export function QuickAddPanel({ cat, feeds, onMutated }: Props) {
     setDateTime({ date: dayKey(now), time: formatTime(now) });
   };
 
-  const toggleExpanded = (t: EventType) => {
+  const toggleExpanded = (next: EventType) => {
     setExpanded((prev) => {
-      if (prev === t) return null;
+      if (prev === next) return null;
       resetDraft();
-      return t;
+      return next;
     });
   };
 
@@ -86,18 +86,14 @@ export function QuickAddPanel({ cat, feeds, onMutated }: Props) {
     if (!expanded || saving) return;
     setSaving(true);
     try {
-      const type = expanded;
+      const def = getEventDef(expanded);
       await createEvent(db, {
         catId: cat.id,
-        type,
+        type: expanded,
         eventDate: dateTime.date,
         eventTime: dateTime.time,
         isUncertain: uncertain,
-        stoolQuality: type === 'poop' ? stool : null,
-        peeVolume: type === 'pee' ? volume : null,
-        feedId: type === 'food' ? activeFeedId : null,
-        amount: type === 'food' && amount > 0 ? amount : null,
-        mealsCount: type === 'food' ? meals : 1,
+        ...draftToFields(def, { ...draft, feedId: activeFeedId }),
         note: comment.trim() || null,
         photoUri,
       });
@@ -122,8 +118,7 @@ export function QuickAddPanel({ cat, feeds, onMutated }: Props) {
     onMutated();
   };
 
-  const meta = expanded ? ACTION_META[expanded] : null;
-  const unit = feeds.find((f) => f.id === activeFeedId)?.unit ?? 'gram';
+  const def = expanded ? getEventDef(expanded) : null;
   const coat = getCoat(cat.color);
 
   return (
@@ -159,8 +154,9 @@ export function QuickAddPanel({ cat, feeds, onMutated }: Props) {
       </View>
 
       <View style={{ flexDirection: 'row', gap: 8 }}>
-        {(Object.keys(ACTION_META) as EventType[]).map((at) => {
-          const m = ACTION_META[at];
+        {enabledQuickActions.map((quickDef) => {
+          const at = quickDef.id;
+          const eventDef = getEventDef(at);
           const active = expanded === at;
           return (
             <Pressable
@@ -172,157 +168,40 @@ export function QuickAddPanel({ cat, feeds, onMutated }: Props) {
                 alignItems: 'center',
                 paddingVertical: 12,
                 borderRadius: 14,
-                backgroundColor: active ? m.soft : '#F6ECE3',
+                backgroundColor: active ? eventDef.soft : '#F6ECE3',
                 borderWidth: active ? 2 : 0,
-                borderColor: m.main,
+                borderColor: eventDef.main,
               }}
             >
-              <Text style={{ fontSize: 18 }}>{m.emoji}</Text>
+              <Text style={{ fontSize: 18 }}>{eventDef.emoji}</Text>
               <Text
                 style={{
                   fontSize: 12,
                   fontWeight: '700',
-                  color: active ? m.main : '#56423C',
+                  color: active ? eventDef.main : '#56423C',
                   marginTop: 2,
                 }}
               >
-                {t(`action.${at}`)}
+                {t(eventDef.labelKey)}
               </Text>
             </Pressable>
           );
         })}
       </View>
 
-      {expanded && meta ? (
+      {expanded && def ? (
         <View style={{ marginTop: 12 }}>
-          {expanded === 'poop' ? (
-            <View>
-              <Text style={{ fontSize: 12, fontWeight: '700', color: '#56423C', marginBottom: 6 }}>
-                {t('event.stool')}
-              </Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                {STOOL_OPTIONS.map((opt) => {
-                  const active = opt === stool;
-                  return (
-                    <Pressable
-                      key={opt}
-                      onPress={() => setStool(opt)}
-                      style={{
-                        paddingHorizontal: 10,
-                        paddingVertical: 6,
-                        borderRadius: 999,
-                        backgroundColor: active ? meta.soft : '#FCF2E8',
-                        borderWidth: active ? 2 : 0,
-                        borderColor: meta.main,
-                      }}
-                    >
-                      <Text style={{ fontSize: 12, fontWeight: '600', color: meta.main }}>
-                        {t(`stool.${opt}`)}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-          ) : null}
+          <View style={{ gap: 2 }}>
+            {def.fields.map((field) => (
+              <EventFieldRenderer
+                key={field}
+                field={field}
+                ctx={{ draft: { ...draft, feedId: activeFeedId }, patch, feeds, main: def.main, soft: def.soft }}
+              />
+            ))}
+          </View>
 
-          {expanded === 'pee' ? (
-            <View>
-              <Text style={{ fontSize: 12, fontWeight: '700', color: '#56423C', marginBottom: 6 }}>
-                {t('event.volume')}
-              </Text>
-              <View style={{ flexDirection: 'row', gap: 6 }}>
-                {PEE_OPTIONS.map((opt) => {
-                  const active = opt === volume;
-                  return (
-                    <Pressable
-                      key={opt}
-                      onPress={() => setVolume(opt)}
-                      style={{
-                        flex: 1,
-                        alignItems: 'center',
-                        paddingVertical: 8,
-                        borderRadius: 12,
-                        backgroundColor: active ? meta.soft : '#FCF2E8',
-                        borderWidth: active ? 2 : 0,
-                        borderColor: meta.main,
-                      }}
-                    >
-                      <Text style={{ fontSize: 12, fontWeight: '600', color: meta.main }}>
-                        {t(`pee.${opt}`)}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-          ) : null}
-
-          {expanded === 'food' ? (
-            <View>
-              <Text style={{ fontSize: 12, fontWeight: '700', color: '#56423C', marginBottom: 6 }}>
-                {t('event.feed')}
-              </Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }}>
-                <View style={{ flexDirection: 'row', gap: 6 }}>
-                  {feeds.map((f) => {
-                    const active = f.id === activeFeedId;
-                    return (
-                      <Pressable
-                        key={f.id}
-                        onPress={() => setFeedId(f.id)}
-                        style={{
-                          paddingHorizontal: 10,
-                          paddingVertical: 6,
-                          borderRadius: 999,
-                          backgroundColor: active ? meta.soft : '#FCF2E8',
-                          borderWidth: active ? 2 : 0,
-                          borderColor: meta.main,
-                        }}
-                      >
-                        <Text style={{ fontSize: 12, fontWeight: '600', color: meta.main }}>
-                          {f.name}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              </ScrollView>
-              <View style={{ gap: 10, marginTop: 4 }}>
-                <View>
-                  <Text style={{ fontSize: 11, color: '#56423C', marginBottom: 4 }}>
-                    {t('event.amount', { unit: t(`units.${unit}`) })}
-                  </Text>
-                  <QuantityStepper
-                    value={amount}
-                    onChange={setAmount}
-                    step={unit === 'spoon' ? 0.5 : 1}
-                    min={0}
-                    max={100}
-                    unitLabel={t(`units.${unit}`)}
-                    quickValues={unit === 'spoon' ? SPOON_QUICK : GRAM_QUICK}
-                    accent={meta.main}
-                  />
-                </View>
-                <View>
-                  <Text style={{ fontSize: 11, color: '#56423C', marginBottom: 4 }}>{t('event.mealsSection')}</Text>
-                  <QuantityStepper
-                    value={meals}
-                    onChange={setMeals}
-                    step={1}
-                    min={1}
-                    max={10}
-                    unitLabel={t('event.meals', { count: meals })}
-                    quickValues={MEALS_QUICK}
-                    accent={meta.main}
-                    chipTimes
-                  />
-                </View>
-              </View>
-            </View>
-          ) : null}
-
-          {expanded === 'poop' || expanded === 'pee' ? (
+          {def.supportsPhoto ? (
             <View style={{ marginTop: 10 }}>
               {photoUri ? (
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -384,7 +263,7 @@ export function QuickAddPanel({ cat, feeds, onMutated }: Props) {
               alignItems: 'center',
               paddingVertical: 12,
               borderRadius: 12,
-              backgroundColor: meta.main,
+              backgroundColor: def.main,
               opacity: saving ? 0.6 : 1,
             }}
           >

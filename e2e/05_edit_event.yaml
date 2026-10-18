@@ -1,0 +1,65 @@
+# Критический путь 5: редактирование события через EventSheet.
+# Самодостаточен: создаёт кормление через «Быструю запись» и редактирует его
+# (смена типа на «Покакала», выбор стула «Жидкий»). Порядок с другими флоу не важен.
+appId: com.llamerr.cattracker
+name: '05 Edit event'
+---
+- extendedWaitUntil:
+    visible: 'Дневник'
+    timeout: 60000
+
+- tapOn: 'Дневник'
+
+- extendedWaitUntil:
+    visible: 'Быстрая запись'
+    timeout: 10000
+
+# Создаём событие, которое будем редактировать.
+- tapOn:
+    id: 'quickadd-food'
+
+- extendedWaitUntil:
+    visible: 'Сохранить событие'
+    timeout: 10000
+
+- tapOn: 'Сохранить событие'
+
+- extendedWaitUntil:
+    visible:
+      id: 'event-card-food'
+    timeout: 15000
+
+# Карточка кормления (самая новая сверху) — тап открывает EventSheet.
+# index нужен: таких карточек может быть несколько после повторных прогонов.
+- tapOn:
+    id: 'event-card-food'
+    index: 0
+
+- extendedWaitUntil:
+    visible:
+      id: 'event-type-poop'
+    timeout: 10000
+
+# Переключаем тип на «Покакала» — появляется поле стула.
+- tapOn:
+    id: 'event-type-poop'
+
+- extendedWaitUntil:
+    visible: 'Стул'
+    timeout: 10000
+
+- tapOn:
+    id: 'stool-liquid'
+
+- tapOn:
+    id: 'event-sheet-save'
+
+# В ленте карточка обновилась: тип poop, качество стула «Жидкий».
+- extendedWaitUntil:
+    visible:
+      id: 'event-card-poop'
+    timeout: 15000
+
+- assertVisible:
+    text: 'Жидкий'
+    index: 0

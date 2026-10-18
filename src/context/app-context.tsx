@@ -3,6 +3,14 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { AppState } from 'react-native';
 
 import { listCats, listFeeds, getMeta, setMeta, deleteMeta, localizePresetFeeds } from '@/db/repositories';
+import {
+  DEFAULT_QUICK_ACTIONS,
+  loadQuickActions,
+  saveQuickActions,
+  moveInList,
+  type QuickActionConfig,
+  type QuickActionId,
+} from '@/domain/quick-actions';
 import i18n, { getDeviceLanguage, LANGUAGE_AUTO, SUPPORTED_LANGUAGES, type Language, type LanguagePref } from '@/i18n';
 import type { Cat, Feed } from '@/types/domain';
 
@@ -22,6 +30,10 @@ interface AppContextValue {
   revision: number;
   languagePref: LanguagePref;
   setLanguage: (pref: LanguagePref) => Promise<void>;
+  quickActions: QuickActionConfig[];
+  toggleQuickAction: (id: QuickActionId) => Promise<void>;
+  moveQuickAction: (id: QuickActionId, dir: -1 | 1) => Promise<void>;
+  resetQuickActions: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -34,6 +46,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [focusDay, setFocusDay] = useState<string | null>(null);
   const [revision, setRevision] = useState(0);
   const [languagePref, setLanguagePrefState] = useState<LanguagePref>(LANGUAGE_AUTO);
+  const [quickActions, setQuickActionsState] = useState<QuickActionConfig[]>(DEFAULT_QUICK_ACTIONS);
 
   const refreshCats = useCallback(async () => {
     const list = await listCats(db);
@@ -104,8 +117,38 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     void (async () => {
       await refreshCats();
       await refreshFeeds();
+      const qa = await loadQuickActions(db);
+      setQuickActionsState(qa);
     })();
-  }, [refreshCats, refreshFeeds]);
+  }, [refreshCats, refreshFeeds, db]);
+
+  const persistQuickActions = useCallback(
+    async (next: QuickActionConfig[]) => {
+      setQuickActionsState(next);
+      await saveQuickActions(db, next);
+    },
+    [db]
+  );
+
+  const toggleQuickAction = useCallback(
+    async (id: QuickActionId) => {
+      const next = quickActions.map((c) => (c.id === id ? { ...c, enabled: !c.enabled } : c));
+      await persistQuickActions(next);
+    },
+    [quickActions, persistQuickActions]
+  );
+
+  const moveQuickAction = useCallback(
+    async (id: QuickActionId, dir: -1 | 1) => {
+      const next = moveInList(quickActions, id, dir);
+      await persistQuickActions(next);
+    },
+    [quickActions, persistQuickActions]
+  );
+
+  const resetQuickActions = useCallback(async () => {
+    await persistQuickActions(DEFAULT_QUICK_ACTIONS.map((d) => ({ ...d })));
+  }, [persistQuickActions]);
 
   const currentCat = useMemo(
     () => cats.find((c) => c.id === currentCatId) ?? cats[0] ?? null,
@@ -127,8 +170,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       revision,
       languagePref,
       setLanguage,
+      quickActions,
+      toggleQuickAction,
+      moveQuickAction,
+      resetQuickActions,
     }),
-    [cats, feeds, currentCat, focusDay, setFocusDay, refreshCats, refreshFeeds, bumpRevision, revision, languagePref, setLanguage]
+    [
+      cats,
+      feeds,
+      currentCat,
+      focusDay,
+      setFocusDay,
+      refreshCats,
+      refreshFeeds,
+      bumpRevision,
+      revision,
+      languagePref,
+      setLanguage,
+      quickActions,
+      toggleQuickAction,
+      moveQuickAction,
+      resetQuickActions,
+    ]
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

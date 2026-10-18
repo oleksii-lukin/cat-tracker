@@ -144,6 +144,7 @@ export const ru = {
     unitSpoons: 'Ложки',
     unitGrams: 'Граммы',
     languageSection: 'Язык',
+    quickBlocks: 'Быстрые блоки',
     langAuto: 'Авто (язык устройства)',
     langRu: 'Русский',
     langUk: 'Українська',

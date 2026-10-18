@@ -68,7 +68,8 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "test": "jest"
+    "test": "jest",
+    "test:e2e": "maestro test e2e/01_first_cat.yaml e2e/02_add_feeding.yaml e2e/03_stats.yaml e2e/04_quick_blocks.yaml e2e/05_edit_event.yaml"
   },
   "private": true,
   "overrides": {

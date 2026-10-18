@@ -26,12 +26,6 @@ export const Design = {
   },
 } as const;
 
-export const ACTION_META: Record<'poop' | 'pee' | 'food', { emoji: string; main: string; soft: string }> = {
-  food: { emoji: '🍽', main: Design.action.food.main, soft: Design.action.food.soft },
-  pee: { emoji: '💧', main: Design.action.pee.main, soft: Design.action.pee.soft },
-  poop: { emoji: '🐾', main: Design.action.poop.main, soft: Design.action.poop.soft },
-};
-
 export const NOTE_META = {
   emoji: '📝',
   main: Design.action.note.main,

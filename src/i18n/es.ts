@@ -144,6 +144,7 @@ export const es: typeof import('./ru').ru = {
     unitSpoons: 'Cucharadas',
     unitGrams: 'Gramos',
     languageSection: 'Idioma',
+    quickBlocks: 'Acciones rápidas',
     langAuto: 'Automático (idioma del dispositivo)',
     langRu: 'Русский',
     langUk: 'Українська',

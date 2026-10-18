@@ -144,6 +144,7 @@ export const de: typeof import('./ru').ru = {
     unitSpoons: 'Löffel',
     unitGrams: 'Gramm',
     languageSection: 'Sprache',
+    quickBlocks: 'Schnellaktionen',
     langAuto: 'Automatisch (Gerätesprache)',
     langRu: 'Русский',
     langUk: 'Українська',

@@ -1,0 +1,49 @@
+# Критический путь 4: настройка быстрых блоков.
+# Предполагает кота от 01_first_cat. Проверяет, что выключение блока в
+# настройках скрывает кнопку в «Быстрой записи», а включение возвращает.
+# Порядок запуска флоузов не гарантирован — переходим на вкладку «Дневник» сами.
+appId: com.llamerr.cattracker
+name: '04 Quick blocks toggle'
+---
+- extendedWaitUntil:
+    visible: 'Дневник'
+    timeout: 60000
+
+- tapOn: 'Дневник'
+
+- extendedWaitUntil:
+    visible: 'Быстрая запись'
+    timeout: 10000
+
+- assertVisible:
+    id: 'quickadd-food'
+
+- tapOn: 'Настройки'
+
+- extendedWaitUntil:
+    visible: 'Быстрые блоки'
+    timeout: 10000
+
+# Выключаем блок «Поела».
+- tapOn:
+    id: 'toggle-food'
+
+- tapOn: 'Дневник'
+
+# Кнопка быстрой записи скрылась.
+- extendedWaitUntil:
+    visible: 'Быстрая запись'
+    timeout: 10000
+- assertNotVisible:
+    id: 'quickadd-food'
+
+# Возвращаем блок обратно — кнопка появилась.
+- tapOn: 'Настройки'
+- tapOn:
+    id: 'toggle-food'
+- tapOn: 'Дневник'
+
+- extendedWaitUntil:
+    visible:
+      id: 'quickadd-food'
+    timeout: 10000

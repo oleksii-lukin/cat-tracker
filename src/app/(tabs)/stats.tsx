@@ -5,11 +5,11 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
-import { ACTION_META } from '@/constants/design';
 import { CoatFrame } from '@/components/coat-frame';
 import { getCoat } from '@/constants/coats';
 import { getDaySummaries } from '@/db/repositories';
 import { useApp } from '@/context/app-context';
+import { getEventDef } from '@/domain/events';
 import type { DaySummary, FeedKind, PeeVolume, StoolQuality } from '@/types/domain';
 import { addDays, formatDay, todayKey, weekdayShort } from '@/utils/dates';
 
@@ -208,19 +208,19 @@ export default function StatsScreen() {
                   <View style={{ flexDirection: 'column', gap: 4 }}>
                     {peeLine ? (
                       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6 }}>
-                        <Text style={{ fontSize: 13 }}>{ACTION_META.pee.emoji}</Text>
+                        <Text style={{ fontSize: 13 }}>{getEventDef('pee').emoji}</Text>
                         <Text style={{ fontSize: 13, color: '#1F1B15', flex: 1 }}>{peeLine}</Text>
                       </View>
                     ) : null}
                     {poopLine ? (
                       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6 }}>
-                        <Text style={{ fontSize: 13 }}>{ACTION_META.poop.emoji}</Text>
+                        <Text style={{ fontSize: 13 }}>{getEventDef('poop').emoji}</Text>
                         <Text style={{ fontSize: 13, color: '#1F1B15', flex: 1 }}>{poopLine}</Text>
                       </View>
                     ) : null}
                     {foodLine ? (
                       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6 }}>
-                        <Text style={{ fontSize: 13 }}>{ACTION_META.food.emoji}</Text>
+                        <Text style={{ fontSize: 13 }}>{getEventDef('food').emoji}</Text>
                         <Text style={{ fontSize: 13, color: '#1F1B15', flex: 1 }}>{foodLine}</Text>
                       </View>
                     ) : null}

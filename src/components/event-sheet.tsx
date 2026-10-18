@@ -12,17 +12,11 @@ import {
 import { useTranslation } from 'react-i18next';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 
-import { QuantityStepper } from '@/components/quantity-stepper';
+import { EventFieldRenderer } from '@/components/event-fields';
 import { TimePill, type DateTimeValue } from '@/components/time-pill';
-import { ACTION_META } from '@/constants/design';
 import { savePhotoAsset } from '@/db/repositories';
-import type {
-  DayEvent,
-  EventType,
-  Feed,
-  PeeVolume,
-  StoolQuality,
-} from '@/types/domain';
+import { ALL_EVENT_TYPES, draftFromEvent, draftToFields, getEventDef, type EventDraft } from '@/domain/events';
+import type { DayEvent, EventType, Feed } from '@/types/domain';
 import { pickPhoto } from '@/utils/photo-picker';
 
 interface Props {
@@ -34,12 +28,6 @@ interface Props {
   onClose: () => void;
 }
 
-const STOOL_OPTIONS: StoolQuality[] = ['normal', 'hard', 'liquid', 'unusual'];
-const PEE_OPTIONS: PeeVolume[] = ['low', 'normal', 'high'];
-const SPOON_QUICK = [0.5, 1, 1.5, 2, 3];
-const GRAM_QUICK = [4, 6, 10, 15, 20, 30, 35];
-const MEALS_QUICK = [1, 2, 3];
-
 export function EventSheet({ event, feeds, catColor, onSave, onDelete, onClose }: Props) {
   const { t } = useTranslation();
   const [type, setType] = useState<EventType>(event.type);
@@ -48,16 +36,13 @@ export function EventSheet({ event, feeds, catColor, onSave, onDelete, onClose }
     time: event.eventTime,
   });
   const [uncertain, setUncertain] = useState(event.isUncertain);
-  const [stool, setStool] = useState<StoolQuality>(event.stoolQuality ?? 'normal');
-  const [volume, setVolume] = useState<PeeVolume>(event.peeVolume ?? 'normal');
-  const [feedId, setFeedId] = useState<string | null>(event.feedId);
-  const [amount, setAmount] = useState(event.amount ?? 0);
-  const [meals, setMeals] = useState(event.mealsCount);
+  const [draft, setDraft] = useState<EventDraft>(draftFromEvent(event));
   const [note, setNote] = useState(event.note ?? '');
   const [photoUri, setPhotoUri] = useState<string | null>(event.photoUri);
 
-  const canPhoto = type === 'poop' || type === 'pee';
-  const unit = feeds.find((f) => f.id === feedId)?.unit ?? 'gram';
+  const patch = (p: Partial<EventDraft>) => setDraft((d) => ({ ...d, ...p }));
+  const def = getEventDef(type);
+  const activeFeedId = draft.feedId ?? feeds[0]?.id ?? null;
 
   const pickPhotoAsset = async () => {
     const uri = await pickPhoto();
@@ -72,11 +57,7 @@ export function EventSheet({ event, feeds, catColor, onSave, onDelete, onClose }
       eventDate: dateTime.date,
       eventTime: dateTime.time,
       isUncertain: uncertain,
-      stoolQuality: type === 'poop' ? stool : null,
-      peeVolume: type === 'pee' ? volume : null,
-      feedId: type === 'food' ? feedId : null,
-      amount: type === 'food' && amount > 0 ? amount : null,
-      mealsCount: type === 'food' ? meals : 1,
+      ...draftToFields(def, { ...draft, feedId: activeFeedId }),
       note: note.trim() || null,
       photoUri,
     });
@@ -110,26 +91,27 @@ export function EventSheet({ event, feeds, catColor, onSave, onDelete, onClose }
             </View>
 
             <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
-              {(Object.keys(ACTION_META) as EventType[]).map((et) => {
-                const m = ACTION_META[et];
+              {ALL_EVENT_TYPES.map((et) => {
+                const etDef = getEventDef(et);
                 const active = et === type;
                 return (
                   <Pressable
                     key={et}
                     onPress={() => setType(et)}
+                    testID={`event-type-${et}`}
                     style={{
                       flex: 1,
                       alignItems: 'center',
                       paddingVertical: 10,
                       borderRadius: 12,
-                      backgroundColor: active ? m.soft : '#F6ECE3',
+                      backgroundColor: active ? etDef.soft : '#F6ECE3',
                       borderWidth: active ? 2 : 0,
-                      borderColor: m.main,
+                      borderColor: etDef.main,
                     }}
                   >
-                    <Text style={{ fontSize: 16 }}>{m.emoji}</Text>
-                    <Text style={{ fontSize: 11, fontWeight: '700', color: active ? m.main : '#56423C' }}>
-                      {t(`action.${et}`)}
+                    <Text style={{ fontSize: 16 }}>{etDef.emoji}</Text>
+                    <Text style={{ fontSize: 11, fontWeight: '700', color: active ? etDef.main : '#56423C' }}>
+                      {t(etDef.labelKey)}
                     </Text>
                   </Pressable>
                 );
@@ -153,132 +135,17 @@ export function EventSheet({ event, feeds, catColor, onSave, onDelete, onClose }
               <Switch value={uncertain} onValueChange={setUncertain} />
             </View>
 
-            {type === 'poop' ? (
-              <View style={{ marginTop: 8 }}>
-                <Text style={{ fontSize: 13, fontWeight: '700', color: '#56423C', marginBottom: 8 }}>
-                  {t('event.stool')}
-                </Text>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                  {STOOL_OPTIONS.map((opt) => {
-                    const active = opt === stool;
-                    return (
-                      <Pressable
-                        key={opt}
-                        onPress={() => setStool(opt)}
-                        style={{
-                          paddingHorizontal: 12,
-                          paddingVertical: 8,
-                          borderRadius: 999,
-                          backgroundColor: active ? ACTION_META.poop.soft : '#F6ECE3',
-                          borderWidth: active ? 2 : 0,
-                          borderColor: ACTION_META.poop.main,
-                        }}
-                      >
-                        <Text style={{ fontSize: 13, fontWeight: '600', color: ACTION_META.poop.main }}>
-                          {t(`stool.${opt}`)}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              </View>
-            ) : null}
+            <View style={{ gap: 2 }}>
+              {def.fields.map((field) => (
+                <EventFieldRenderer
+                  key={field}
+                  field={field}
+                  ctx={{ draft: { ...draft, feedId: activeFeedId }, patch, feeds, main: def.main, soft: def.soft }}
+                />
+              ))}
+            </View>
 
-            {type === 'pee' ? (
-              <View style={{ marginTop: 8 }}>
-                <Text style={{ fontSize: 13, fontWeight: '700', color: '#56423C', marginBottom: 8 }}>
-                  {t('event.volume')}
-                </Text>
-                <View style={{ flexDirection: 'row', gap: 8 }}>
-                  {PEE_OPTIONS.map((opt) => {
-                    const active = opt === volume;
-                    return (
-                      <Pressable
-                        key={opt}
-                        onPress={() => setVolume(opt)}
-                        style={{
-                          flex: 1,
-                          alignItems: 'center',
-                          paddingVertical: 10,
-                          borderRadius: 12,
-                          backgroundColor: active ? ACTION_META.pee.soft : '#F6ECE3',
-                          borderWidth: active ? 2 : 0,
-                          borderColor: ACTION_META.pee.main,
-                        }}
-                      >
-                        <Text style={{ fontSize: 13, fontWeight: '600', color: ACTION_META.pee.main }}>
-                          {t(`pee.${opt}`)}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              </View>
-            ) : null}
-
-            {type === 'food' ? (
-              <View style={{ marginTop: 8 }}>
-                <Text style={{ fontSize: 13, fontWeight: '700', color: '#56423C', marginBottom: 8 }}>
-                  {t('event.feed')}
-                </Text>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                  {feeds.map((f) => {
-                    const active = f.id === feedId;
-                    return (
-                      <Pressable
-                        key={f.id}
-                        onPress={() => setFeedId(f.id)}
-                        style={{
-                          paddingHorizontal: 12,
-                          paddingVertical: 8,
-                          borderRadius: 999,
-                          backgroundColor: active ? ACTION_META.food.soft : '#F6ECE3',
-                          borderWidth: active ? 2 : 0,
-                          borderColor: ACTION_META.food.main,
-                        }}
-                      >
-                        <Text style={{ fontSize: 13, fontWeight: '600', color: ACTION_META.food.main }}>
-                          {f.name}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-                <View style={{ gap: 10, marginTop: 10 }}>
-                  <View>
-                    <Text style={{ fontSize: 12, color: '#56423C', marginBottom: 4 }}>
-                      {t('event.amount', { unit: t(`units.${unit}`) })}
-                    </Text>
-                    <QuantityStepper
-                      value={amount}
-                      onChange={setAmount}
-                      step={unit === 'spoon' ? 0.5 : 1}
-                      min={0}
-                      max={100}
-                      unitLabel={t(`units.${unit}`)}
-                      quickValues={unit === 'spoon' ? SPOON_QUICK : GRAM_QUICK}
-                      accent={ACTION_META.food.main}
-                    />
-                  </View>
-                  <View>
-                    <Text style={{ fontSize: 12, color: '#56423C', marginBottom: 4 }}>{t('event.mealsSection')}</Text>
-                    <QuantityStepper
-                      value={meals}
-                      onChange={setMeals}
-                      step={1}
-                      min={1}
-                      max={10}
-                      unitLabel={t('event.meals', { count: meals })}
-                      quickValues={MEALS_QUICK}
-                      accent={ACTION_META.food.main}
-                      chipTimes
-                    />
-                  </View>
-                </View>
-              </View>
-            ) : null}
-
-            {canPhoto ? (
+            {def.supportsPhoto ? (
               <View style={{ marginTop: 14 }}>
                 <Text style={{ fontSize: 13, fontWeight: '700', color: '#56423C', marginBottom: 8 }}>
                   {t('event.photo')}
@@ -344,6 +211,7 @@ export function EventSheet({ event, feeds, catColor, onSave, onDelete, onClose }
               </Pressable>
               <Pressable
                 onPress={save}
+                testID="event-sheet-save"
                 style={{
                   flex: 1,
                   alignItems: 'center',
@@ -357,7 +225,7 @@ export function EventSheet({ event, feeds, catColor, onSave, onDelete, onClose }
             </View>
 
             <Text style={{ fontSize: 11, color: '#A49C93', marginTop: 10, textAlign: 'center' }}>
-              {t(`action.${type}`)} · {dateTime.date}
+              {t(def.labelKey)} · {dateTime.date}
             </Text>
           </ScrollView>
         </Pressable>

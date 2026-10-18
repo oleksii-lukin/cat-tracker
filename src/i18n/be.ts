@@ -144,6 +144,7 @@ export const be: typeof import('./ru').ru = {
     unitSpoons: 'Ложкі',
     unitGrams: 'Грамы',
     languageSection: 'Мова',
+    quickBlocks: 'Хуткія дзеянні',
     langAuto: 'Аўтаматычная (мова прылады)',
     langRu: 'Русский',
     langUk: 'Українська',
