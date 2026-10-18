@@ -8,4 +8,5 @@ export const DEFAULT_QUICK_ACTIONS: QuickActionConfig[] = [
   { id: 'food', enabled: true, order: 0 },
   { id: 'pee', enabled: true, order: 1 },
   { id: 'poop', enabled: true, order: 2 },
+  { id: 'hairball', enabled: true, order: 3 },
 ];

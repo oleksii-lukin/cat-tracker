@@ -33,11 +33,19 @@ function makeEvent(overrides: Partial<DayEvent>): DayEvent {
 
 describe('EVENTS_REGISTRY', () => {
   it('покрывает все типы событий', () => {
-    expect(ALL_EVENT_TYPES.sort()).toEqual(['food', 'pee', 'poop']);
+    expect(ALL_EVENT_TYPES.sort()).toEqual(['food', 'hairball', 'pee', 'poop']);
     for (const type of ALL_EVENT_TYPES) {
       expect(EVENTS_REGISTRY[type]).toBeDefined();
       expect(EVENTS_REGISTRY[type].id).toBe(type);
     }
+  });
+
+  it('hairball: поле amount в сантиметрах, без фото', () => {
+    const def = getEventDef('hairball');
+    expect(def.fields).toEqual(['amount']);
+    expect(def.amountUnit).toBe('cm');
+    expect(def.supportsPhoto).toBe(false);
+    expect(def.labelKey).toBe('action.hairball');
   });
 });
 
@@ -49,10 +57,10 @@ describe('getEventDef', () => {
   });
 
   it('возвращает нейтральный fallback для неизвестного типа', () => {
-    const def = getEventDef('hairball');
+    const def = getEventDef('vomit');
     expect(def.fields).toEqual([]);
     expect(def.supportsPhoto).toBe(false);
-    expect(def.labelKey).toBe('action.hairball');
+    expect(def.labelKey).toBe('action.vomit');
   });
 });
 

@@ -321,6 +321,10 @@ describe('getDaySummaries', () => {
     // Еда без feed_id — fallback на dry/gram
     await createEvent(db, { catId: cat.id, type: 'food', eventDate: '2026-01-06', eventTime: '08:00' });
 
+    // Паста: с дозой (см) и без
+    await createEvent(db, { catId: cat.id, type: 'hairball', eventDate: '2026-01-05', eventTime: '15:00', amount: 3 });
+    await createEvent(db, { catId: cat.id, type: 'hairball', eventDate: '2026-01-05', eventTime: '21:00' });
+
     // Soft-deleted — не должен попасть в сводку
     const deleted = await createEvent(db, { catId: cat.id, type: 'poop', eventDate: '2026-01-05', eventTime: '21:00' });
     await softDeleteEvent(db, deleted.id);
@@ -370,6 +374,26 @@ describe('getDaySummaries', () => {
     expect(day6.foodByKind).toEqual([
       { kind: 'dry', unit: 'gram', totalAmount: 0, eventsWithoutAmount: 1 },
     ]);
+  });
+
+  it('считает generic-счётчики по типам (включая пасту)', async () => {
+    const db = await freshDb();
+    const cat = await seedEvents(db);
+
+    const summaries = await getDaySummaries(db, cat.id, '2026-01-01', '2026-01-31');
+
+    const day5 = summaries['2026-01-05'];
+    expect(day5.countsByType).toEqual({ poop: 2, pee: 1, food: 3, hairball: 2 });
+  });
+
+  it('суммирует type-level amount пасты (см) и пропуски дозы', async () => {
+    const db = await freshDb();
+    const cat = await seedEvents(db);
+
+    const summaries = await getDaySummaries(db, cat.id, '2026-01-01', '2026-01-31');
+
+    const day5 = summaries['2026-01-05'];
+    expect(day5.amountsByType).toEqual({ hairball: { totalAmount: 3, eventsWithoutAmount: 1 } });
   });
 });
 

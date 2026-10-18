@@ -1,5 +1,6 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
+import { getEventDef, hasField } from '@/domain/events';
 import { PRESET_FEED_NAMES, type Language } from '@/i18n';
 import type {
   Cat,
@@ -491,6 +492,8 @@ export async function getDaySummaries(
         peeVolumes: [],
         foodByKind: [],
         foodEvents: 0,
+        countsByType: {},
+        amountsByType: {},
       };
     }
     return result[day];
@@ -498,6 +501,7 @@ export async function getDaySummaries(
 
   for (const row of events) {
     const summary = ensure(row.event_date);
+    summary.countsByType[row.type] = (summary.countsByType[row.type] ?? 0) + 1;
     if (row.type === 'poop') {
       summary.poopCount += 1;
       if (row.stool_quality) summary.poopQualities.push(row.stool_quality as StoolQuality);
@@ -516,6 +520,19 @@ export async function getDaySummaries(
       }
       if (row.amount != null) bucket.totalAmount += row.amount;
       else bucket.eventsWithoutAmount += 1;
+    } else {
+      // Type-level amount (not feed-tied), e.g. hairball paste in cm:
+      // any type declaring the amount field is aggregated generically.
+      const def = getEventDef(row.type);
+      if (hasField(def, 'amount')) {
+        let bucket = summary.amountsByType[row.type];
+        if (!bucket) {
+          bucket = { totalAmount: 0, eventsWithoutAmount: 0 };
+          summary.amountsByType[row.type] = bucket;
+        }
+        if (row.amount != null) bucket.totalAmount += row.amount;
+        else bucket.eventsWithoutAmount += 1;
+      }
     }
   }
   return result;

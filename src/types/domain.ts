@@ -1,6 +1,6 @@
 export type Sex = 'male' | 'female' | 'unknown';
 
-export type EventType = 'poop' | 'pee' | 'food';
+export type EventType = 'poop' | 'pee' | 'food' | 'hairball';
 
 export type StoolQuality = 'normal' | 'hard' | 'liquid' | 'unusual';
 
@@ -87,6 +87,11 @@ export interface EventInput {
   photoUri?: string | null;
 }
 
+export interface TypeAmountSummary {
+  totalAmount: number;
+  eventsWithoutAmount: number;
+}
+
 export interface DaySummary {
   poopCount: number;
   poopQualities: StoolQuality[];
@@ -94,4 +99,8 @@ export interface DaySummary {
   peeVolumes: PeeVolume[];
   foodByKind: { kind: FeedKind; unit: FeedUnit; totalAmount: number; eventsWithoutAmount: number }[];
   foodEvents: number;
+  /** Generic counters for every event type (incl. poop/pee/food). */
+  countsByType: Record<string, number>;
+  /** Sums of the amount field for types with a type-level amount (e.g. hairball). */
+  amountsByType: Record<string, TypeAmountSummary>;
 }

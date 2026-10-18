@@ -37,6 +37,16 @@ export const EVENTS_REGISTRY: Record<EventType, EventTypeDef> = {
     fields: ['feedId', 'amount', 'mealsCount'],
     supportsPhoto: false,
   },
+  hairball: {
+    id: 'hairball',
+    labelKey: 'action.hairball',
+    emoji: '🧴',
+    main: '#4C8B5B',
+    soft: '#E7F3EA',
+    fields: ['amount'],
+    amountUnit: 'cm',
+    supportsPhoto: false,
+  },
 };
 
 export const ALL_EVENT_TYPES = Object.keys(EVENTS_REGISTRY) as EventType[];

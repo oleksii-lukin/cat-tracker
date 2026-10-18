@@ -196,7 +196,14 @@ export function QuickAddPanel({ cat, feeds, onMutated }: Props) {
               <EventFieldRenderer
                 key={field}
                 field={field}
-                ctx={{ draft: { ...draft, feedId: activeFeedId }, patch, feeds, main: def.main, soft: def.soft }}
+                ctx={{
+                  draft: { ...draft, feedId: activeFeedId },
+                  patch,
+                  feeds,
+                  main: def.main,
+                  soft: def.soft,
+                  amountUnit: def.amountUnit,
+                }}
               />
             ))}
           </View>

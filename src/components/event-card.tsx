@@ -36,6 +36,9 @@ function eventDetails(event: DayEvent, feeds: Feed[], t: TFunction): string[] {
         details.push(`${event.mealsCount} ${t('event.meals', { count: event.mealsCount })}`);
       }
     }
+  } else if (hasField(def, 'amount') && event.amount != null) {
+    // Type-level amount not tied to a feed (e.g. hairball paste in cm).
+    details.push(`${event.amount} ${t(`units.${def.amountUnit ?? 'gram'}`)}`);
   }
   return details;
 }

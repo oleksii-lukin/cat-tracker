@@ -15,11 +15,13 @@ interface FieldRenderContext {
   feeds: Feed[];
   main: string;
   soft: string;
+  /** Type-level amount unit (e.g. 'cm' for paste); overrides the feed-derived one. */
+  amountUnit?: string;
 }
 
 /** Renders the editor for a single event field. */
 export function EventFieldRenderer({ field, ctx }: { field: EventField; ctx: FieldRenderContext }) {
-  const { draft, patch, feeds, main, soft } = ctx;
+  const { draft, patch, feeds, main, soft, amountUnit } = ctx;
   switch (field) {
     case 'stoolQuality':
       return <StoolQualityField value={draft.stoolQuality} onChange={(v) => patch({ stoolQuality: v })} main={main} soft={soft} />;
@@ -42,6 +44,7 @@ export function EventFieldRenderer({ field, ctx }: { field: EventField; ctx: Fie
           onChange={(v) => patch({ amount: v })}
           feeds={feeds}
           feedId={draft.feedId}
+          unitOverride={amountUnit}
           main={main}
         />
       );

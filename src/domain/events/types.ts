@@ -15,6 +15,8 @@ export interface EventTypeDef {
   soft: string;
   /** Which optional fields of DayEvent this type uses. */
   fields: readonly EventField[];
+  /** Unit for the amount field when it's not tied to a feed (e.g. 'cm' for paste). */
+  amountUnit?: string;
   /** Whether a photo can be attached to this type. */
   supportsPhoto: boolean;
 }

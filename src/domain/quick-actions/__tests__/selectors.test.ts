@@ -14,17 +14,19 @@ describe('mergeWithDefaults', () => {
     expect(mergeWithDefaults([], DEFAULT_QUICK_ACTIONS)).toEqual(DEFAULT_QUICK_ACTIONS);
   });
 
-  it('сохраняет пользовательский enabled/order', () => {
+  it('сохраняет пользовательский enabled/order, добавляя новые дефолтные id', () => {
     const stored: QuickActionConfig[] = [
       { id: 'poop', enabled: false, order: 0 },
       { id: 'food', enabled: false, order: 1 },
       { id: 'pee', enabled: true, order: 2 },
     ];
     const merged = mergeWithDefaults(stored, DEFAULT_QUICK_ACTIONS);
-    expect(merged).toHaveLength(3);
+    expect(merged).toHaveLength(4);
     expect(merged.find((c) => c.id === 'poop')?.enabled).toBe(false);
     expect(merged.find((c) => c.id === 'food')?.enabled).toBe(false);
     expect(merged.find((c) => c.id === 'pee')?.enabled).toBe(true);
+    // id, отсутствовавший в сторе, дозаливается из дефолтов
+    expect(merged.find((c) => c.id === 'hairball')).toEqual({ id: 'hairball', enabled: true, order: 3 });
   });
 
   it('добавляет новые дефолтные id, отсутствующие в сторе', () => {

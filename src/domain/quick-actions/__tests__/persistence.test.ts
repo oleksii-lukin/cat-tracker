@@ -28,12 +28,13 @@ describe('loadQuickActions / saveQuickActions', () => {
       { id: 'poop', enabled: true, order: 0 },
       { id: 'food', enabled: false, order: 1 },
       { id: 'pee', enabled: true, order: 2 },
+      { id: 'hairball', enabled: false, order: 3 },
     ];
     await saveQuickActions(db, custom);
 
     const loaded = await loadQuickActions(db);
     expect(loaded).toEqual(custom);
-    expect(getIdsInOrder(loaded)).toEqual(['poop', 'food', 'pee']);
+    expect(getIdsInOrder(loaded)).toEqual(['poop', 'food', 'pee', 'hairball']);
   });
 
   it('переживает повреждённый JSON в app_meta', async () => {

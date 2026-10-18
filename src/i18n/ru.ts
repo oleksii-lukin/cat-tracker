@@ -30,6 +30,7 @@ export const ru = {
     food: 'Поела',
     pee: 'Пописяла',
     poop: 'Покакала',
+    hairball: 'Паста',
   },
   note: {
     label: 'Заметка',
@@ -159,6 +160,7 @@ export const ru = {
     spoon: 'лож.',
     gram: 'г',
     kilogram: 'кг',
+    cm: 'см',
   },
   stool: {
     normal: 'Норма',

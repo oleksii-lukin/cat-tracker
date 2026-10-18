@@ -9,7 +9,7 @@ import { CoatFrame } from '@/components/coat-frame';
 import { getCoat } from '@/constants/coats';
 import { getDaySummaries } from '@/db/repositories';
 import { useApp } from '@/context/app-context';
-import { getEventDef } from '@/domain/events';
+import { ALL_EVENT_TYPES, getEventDef } from '@/domain/events';
 import type { DaySummary, FeedKind, PeeVolume, StoolQuality } from '@/types/domain';
 import { addDays, formatDay, todayKey, weekdayShort } from '@/utils/dates';
 
@@ -40,6 +40,8 @@ const EMPTY_SUMMARY: DaySummary = {
   peeVolumes: [],
   foodByKind: [],
   foodEvents: 0,
+  countsByType: {},
+  amountsByType: {},
 };
 
 export default function StatsScreen() {
@@ -102,6 +104,24 @@ export default function StatsScreen() {
       ? `: ${uniqueLabels<StoolQuality>(summary.poopQualities, (q) => t(`stool.${q}`))}`
       : '';
     return `${t('action.poop')} ${summary.poopCount} ${t('stats.times', { count: summary.poopCount })}${qualities}`;
+  };
+
+  // Generic types with a type-level amount (e.g. hairball paste in cm).
+  // poop/pee/food have their own detailed formatting above.
+  const GENERIC_TYPES: string[] = ALL_EVENT_TYPES.filter(
+    (et) => et !== 'poop' && et !== 'pee' && et !== 'food'
+  );
+
+  const formatGeneric = (summary: DaySummary, type: string): string | null => {
+    const count = summary.countsByType[type] ?? 0;
+    if (count === 0) return null;
+    const def = getEventDef(type);
+    const amount = summary.amountsByType[type];
+    let line = `${t(def.labelKey)} ${count} ${t('stats.times', { count })}`;
+    if (amount && amount.totalAmount > 0) {
+      line += ` · ${amount.totalAmount} ${t(`units.${def.amountUnit ?? 'gram'}`)}`;
+    }
+    return line;
   };
 
   if (!currentCat) {
@@ -180,7 +200,10 @@ export default function StatsScreen() {
             const foodLine = formatFood(s);
             const peeLine = formatPee(s);
             const poopLine = formatPoop(s);
-            const isEmpty = !foodLine && !peeLine && !poopLine;
+            const genericLines = GENERIC_TYPES.map((type) => ({ type, line: formatGeneric(s, type) })).filter(
+              (x): x is { type: string; line: string } => x.line !== null
+            );
+            const isEmpty = !foodLine && !peeLine && !poopLine && genericLines.length === 0;
             return (
               <Pressable
                 key={day}
@@ -224,6 +247,12 @@ export default function StatsScreen() {
                         <Text style={{ fontSize: 13, color: '#1F1B15', flex: 1 }}>{foodLine}</Text>
                       </View>
                     ) : null}
+                    {genericLines.map(({ type, line }) => (
+                      <View key={type} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6 }}>
+                        <Text style={{ fontSize: 13 }}>{getEventDef(type).emoji}</Text>
+                        <Text style={{ fontSize: 13, color: '#1F1B15', flex: 1 }}>{line}</Text>
+                      </View>
+                    ))}
                   </View>
                 )}
               </Pressable>

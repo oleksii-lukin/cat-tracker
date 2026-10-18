@@ -30,6 +30,7 @@ export const it: typeof import('./ru').ru = {
     food: 'Ha mangiato',
     pee: 'Ha pisciato',
     poop: 'Ha cagato',
+    hairball: 'Pasta',
   },
   note: {
     label: 'Nota',
@@ -159,6 +160,7 @@ export const it: typeof import('./ru').ru = {
     spoon: 'cucch.',
     gram: 'g',
     kilogram: 'kg',
+    cm: 'cm',
   },
   stool: {
     normal: 'Normale',

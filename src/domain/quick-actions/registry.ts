@@ -12,6 +12,7 @@ export const QUICK_ACTIONS_REGISTRY = {
   food: EVENTS_REGISTRY.food,
   pee: EVENTS_REGISTRY.pee,
   poop: EVENTS_REGISTRY.poop,
+  hairball: EVENTS_REGISTRY.hairball,
 } as const satisfies Record<string, QuickActionDef>;
 
 /** Key in the app_meta table where the user config (JSON) is stored. */

@@ -57,7 +57,7 @@ describe('AppContext: quickActions', () => {
       await result.current.moveQuickAction('food', 1);
     });
 
-    expect(getIdsInOrder(result.current.quickActions)).toEqual(['pee', 'food', 'poop']);
+    expect(getIdsInOrder(result.current.quickActions)).toEqual(['pee', 'food', 'poop', 'hairball']);
 
     const raw = await getMeta(mockDb, QUICK_ACTIONS_META_KEY);
     const stored = JSON.parse(raw ?? '[]') as { id: string; order: number }[];
@@ -65,6 +65,7 @@ describe('AppContext: quickActions', () => {
       'pee',
       'food',
       'poop',
+      'hairball',
     ]);
   });
 
