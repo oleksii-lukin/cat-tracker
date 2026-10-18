@@ -20,7 +20,8 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.llamerr.cattracker"
+      "package": "com.llamerr.cattracker",
+      "softwareKeyboardLayoutMode": "resize"
     },
     "web": {
       "output": "static",

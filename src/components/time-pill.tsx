@@ -7,6 +7,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useTranslation } from 'react-i18next';
 
 import { addDays, dayKey, formatDay, formatTime, todayKey } from '@/utils/dates';
@@ -68,19 +69,23 @@ export function TimePill({ value, onChange, catColor }: Props) {
 
       <Modal visible={modalOpen} transparent animationType="fade" onRequestClose={() => setModalOpen(false)}>
         <Pressable
-          style={{ flex: 1, backgroundColor: 'rgba(31,27,21,0.4)', justifyContent: 'flex-end' }}
+          style={{ flex: 1, backgroundColor: 'rgba(31,27,21,0.4)' }}
           onPress={() => setModalOpen(false)}
         >
-          <Pressable
-            style={{
-              backgroundColor: '#FFF8F3',
-              borderTopLeftRadius: 24,
-              borderTopRightRadius: 24,
-              padding: 20,
-              paddingBottom: 32,
-            }}
-            onPress={(e) => e.stopPropagation()}
+          <KeyboardAvoidingView
+            behavior="padding"
+            style={{ flex: 1, justifyContent: 'flex-end' }}
           >
+            <Pressable
+              style={{
+                backgroundColor: '#FFF8F3',
+                borderTopLeftRadius: 24,
+                borderTopRightRadius: 24,
+                padding: 20,
+                paddingBottom: 32,
+              }}
+              onPress={(e) => e.stopPropagation()}
+            >
             <Text style={{ fontSize: 17, fontWeight: '700', color: '#1F1B15', marginBottom: 12 }}>
               {t('time.dateTime')}
             </Text>
@@ -178,7 +183,8 @@ export function TimePill({ value, onChange, catColor }: Props) {
             <Text style={{ fontSize: 11, color: '#A49C93', marginTop: 10 }}>
               {t('time.currentSelection', { date: formatDay(dateDraft) })}
             </Text>
-          </Pressable>
+            </Pressable>
+          </KeyboardAvoidingView>
         </Pressable>
       </Modal>
     </>

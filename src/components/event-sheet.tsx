@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 
 import { QuantityStepper } from '@/components/quantity-stepper';
 import { TimePill, type DateTimeValue } from '@/components/time-pill';
@@ -84,9 +85,13 @@ export function EventSheet({ event, feeds, catColor, onSave, onDelete, onClose }
   return (
     <Modal visible transparent animationType="slide" onRequestClose={onClose}>
       <Pressable
-        style={{ flex: 1, backgroundColor: 'rgba(31,27,21,0.4)', justifyContent: 'flex-end' }}
+        style={{ flex: 1, backgroundColor: 'rgba(31,27,21,0.4)' }}
         onPress={onClose}
       >
+        <KeyboardAvoidingView
+          behavior="padding"
+          style={{ flex: 1, justifyContent: 'flex-end' }}
+        >
         <Pressable
           style={{
             backgroundColor: '#FFF8F3',
@@ -356,6 +361,7 @@ export function EventSheet({ event, feeds, catColor, onSave, onDelete, onClose }
             </Text>
           </ScrollView>
         </Pressable>
+        </KeyboardAvoidingView>
       </Pressable>
     </Modal>
   );

@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 
 import { CatAvatar } from '@/components/cat-avatar';
 import { CoatFrame } from '@/components/coat-frame';
@@ -349,9 +350,13 @@ export default function SettingsScreen() {
 
       <Modal visible={catModal} transparent animationType="slide" onRequestClose={() => setCatModal(false)}>
         <Pressable
-          style={{ flex: 1, backgroundColor: 'rgba(31,27,21,0.4)', justifyContent: 'flex-end' }}
+          style={{ flex: 1, backgroundColor: 'rgba(31,27,21,0.4)' }}
           onPress={() => setCatModal(false)}
         >
+          <KeyboardAvoidingView
+            behavior="padding"
+            style={{ flex: 1, justifyContent: 'flex-end' }}
+          >
           <Pressable
             style={{
               backgroundColor: '#FFF8F3',
@@ -564,14 +569,19 @@ export default function SettingsScreen() {
               </View>
             </ScrollView>
           </Pressable>
+          </KeyboardAvoidingView>
         </Pressable>
       </Modal>
 
       <Modal visible={feedModal} transparent animationType="slide" onRequestClose={() => setFeedModal(false)}>
         <Pressable
-          style={{ flex: 1, backgroundColor: 'rgba(31,27,21,0.4)', justifyContent: 'flex-end' }}
+          style={{ flex: 1, backgroundColor: 'rgba(31,27,21,0.4)' }}
           onPress={() => setFeedModal(false)}
         >
+          <KeyboardAvoidingView
+            behavior="padding"
+            style={{ flex: 1, justifyContent: 'flex-end' }}
+          >
           <Pressable
             style={{
               backgroundColor: '#FFF8F3',
@@ -679,6 +689,7 @@ export default function SettingsScreen() {
               </Pressable>
             </View>
           </Pressable>
+          </KeyboardAvoidingView>
         </Pressable>
       </Modal>
     </CoatFrame>

@@ -1,6 +1,7 @@
 import { DarkTheme, DefaultTheme, ThemeProvider, Stack } from 'expo-router';
 import { SQLiteProvider } from 'expo-sqlite';
 import { useColorScheme } from 'react-native';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
 import { AppProvider } from '@/context/app-context';
@@ -25,11 +26,13 @@ export default function RootLayout() {
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : LIGHT_ONLY}>
         <SQLiteProvider databaseName="cat-tracker.db" onInit={migrateDbIfNeeded}>
           <AppProvider>
-            <Stack
-              screenOptions={{
-                headerShown: false,
-              }}
-            />
+            <KeyboardProvider>
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                }}
+              />
+            </KeyboardProvider>
           </AppProvider>
         </SQLiteProvider>
       </ThemeProvider>
