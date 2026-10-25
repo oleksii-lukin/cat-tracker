@@ -1,9 +1,11 @@
 import i18n from '@/i18n';
 import {
   addDays,
+  dateAtTime,
   dayKey,
   formatTime,
   formatWeightGrams,
+  isValidTime,
   monthLabel,
   parseDayKey,
   relativeDayLabel,
@@ -60,6 +62,39 @@ describe('formatTime', () => {
     expect(formatTime(new Date(2026, 0, 1, 9, 5))).toBe('09:05');
     expect(formatTime(new Date(2026, 0, 1, 23, 59))).toBe('23:59');
     expect(formatTime(new Date(2026, 0, 1, 0, 0))).toBe('00:00');
+  });
+});
+
+describe('isValidTime', () => {
+  it('принимает только нормализованный HH:MM в пределах 00:00–23:59', () => {
+    expect(isValidTime('00:00')).toBe(true);
+    expect(isValidTime('09:30')).toBe(true);
+    expect(isValidTime('23:59')).toBe(true);
+  });
+
+  it('отклоняет легаси-формат и мусор', () => {
+    expect(isValidTime('9:30')).toBe(false);
+    expect(isValidTime('24:00')).toBe(false);
+    expect(isValidTime('12:60')).toBe(false);
+    expect(isValidTime('1230')).toBe(false);
+    expect(isValidTime('')).toBe(false);
+  });
+});
+
+describe('dateAtTime', () => {
+  it('склеивает день и время в локальный момент', () => {
+    const d = dateAtTime('2026-01-05', '12:05');
+    expect(d.getFullYear()).toBe(2026);
+    expect(d.getMonth()).toBe(0);
+    expect(d.getDate()).toBe(5);
+    expect(d.getHours()).toBe(12);
+    expect(d.getMinutes()).toBe(5);
+  });
+
+  it('терпит легаси-время «9:05» и мусор', () => {
+    expect(formatTime(dateAtTime('2026-01-05', '9:05'))).toBe('09:05');
+    expect(formatTime(dateAtTime('2026-01-05', ''))).toBe('00:00');
+    expect(formatTime(dateAtTime('2026-01-05', '99:99'))).toBe('23:59');
   });
 });
 

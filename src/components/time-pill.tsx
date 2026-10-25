@@ -4,12 +4,12 @@ import {
   Pressable,
   ScrollView,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useTranslation } from 'react-i18next';
 
+import { TimeField } from '@/components/time-field';
 import { addDays, dayKey, formatDay, formatTime, todayKey } from '@/utils/dates';
 
 export interface DateTimeValue {
@@ -120,7 +120,7 @@ export function TimePill({ value, onChange, catColor }: Props) {
             <Text style={{ fontSize: 12, fontWeight: '700', color: '#56423C', marginBottom: 8 }}>
               {t('time.timeLabel')}
             </Text>
-            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
+            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8, alignItems: 'center' }}>
               <Pressable
                 onPress={() => setTimeDraft(formatTime(new Date()))}
                 style={{
@@ -132,24 +132,11 @@ export function TimePill({ value, onChange, catColor }: Props) {
               >
                 <Text style={{ fontSize: 12, fontWeight: '600', color: '#56423C' }}>{t('time.now')}</Text>
               </Pressable>
-              <TextInput
-                value={timeDraft}
-                onChangeText={(t) => {
-                  const cleaned = t.replace(/[^0-9:]/g, '').slice(0, 5);
-                  setTimeDraft(cleaned);
-                }}
-                placeholder={t('time.timePlaceholder')}
-                placeholderTextColor="#A49C93"
-                keyboardType="numbers-and-punctuation"
-                style={{
-                  flex: 1,
-                  backgroundColor: '#FCF2E8',
-                  borderRadius: 12,
-                  paddingHorizontal: 12,
-                  paddingVertical: 8,
-                  fontSize: 15,
-                  color: '#1F1B15',
-                }}
+              <TimeField
+                day={dateDraft}
+                time={timeDraft}
+                onChange={setTimeDraft}
+                accentColor={catColor}
               />
             </View>
 

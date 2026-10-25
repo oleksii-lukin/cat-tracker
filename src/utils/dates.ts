@@ -51,6 +51,21 @@ export function formatTime(date: Date): string {
   return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
+/** Валидный нормализованный формат хранения времени: HH:MM, 24 часа. */
+export function isValidTime(value: string): boolean {
+  return /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
+}
+
+/** Момент «день + время» для пикера. Терпит легаси-записи вида «9:30», выравнивает мусор. */
+export function dateAtTime(day: string, time: string): Date {
+  const date = parseDayKey(day);
+  const [rawHours, rawMinutes] = time.split(':').map(Number);
+  const clamp = (value: number, max: number): number =>
+    Number.isFinite(value) ? Math.min(max, Math.max(0, Math.floor(value))) : 0;
+  date.setHours(clamp(rawHours, 23), clamp(rawMinutes, 59), 0, 0);
+  return date;
+}
+
 export function monthLabel(day: string): string {
   return capitalize(formatDate(day, { month: 'long', year: 'numeric' }));
 }
