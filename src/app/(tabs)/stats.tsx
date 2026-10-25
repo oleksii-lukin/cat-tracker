@@ -1,10 +1,11 @@
 import { useSQLiteContext } from 'expo-sqlite';
 import { router } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
+import { CatChips } from '@/components/cat-chips';
 import { CoatFrame } from '@/components/coat-frame';
 import { getCoat } from '@/constants/coats';
 import { getDaySummaries } from '@/db/repositories';
@@ -47,10 +48,14 @@ const EMPTY_SUMMARY: DaySummary = {
 export default function StatsScreen() {
   const { t } = useTranslation();
   const db = useSQLiteContext();
-  const { currentCat, setFocusDay, revision } = useApp();
+  const { cats, currentCat, currentCatId, setCurrentCatId, setFocusDay, revision } = useApp();
   const [rangeKey, setRangeKey] = useState<RangeKey>('week');
   const [summaries, setSummaries] = useState<Record<string, DaySummary>>({});
   const [loading, setLoading] = useState(false);
+  // Защита от гонки: применяется только ответ самого позднего запроса,
+  // а при смене кота сводки прошлого кота сбрасываются до загрузки новых.
+  const requestId = useRef(0);
+  const loadedCatId = useRef<string | null>(null);
 
   const days = useMemo(() => {
     const today = todayKey();
@@ -60,12 +65,17 @@ export default function StatsScreen() {
 
   const load = useCallback(async () => {
     if (!currentCat) return;
+    const id = ++requestId.current;
+    if (loadedCatId.current !== currentCat.id) {
+      loadedCatId.current = currentCat.id;
+      setSummaries({});
+    }
     setLoading(true);
     try {
       const result = await getDaySummaries(db, currentCat.id, days[days.length - 1], days[0]);
-      setSummaries(result);
+      if (id === requestId.current) setSummaries(result);
     } finally {
-      setLoading(false);
+      if (id === requestId.current) setLoading(false);
     }
   }, [db, currentCat, days]);
 
@@ -141,33 +151,24 @@ export default function StatsScreen() {
   return (
     <CoatFrame
       coat={coat}
-      header={
+      header={<CatChips cats={cats} currentCatId={currentCatId} onSelect={setCurrentCatId} />}
+    >
+      <ScrollView contentContainerStyle={{ padding: 16 }}>
         <View
           style={{
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',
-            paddingHorizontal: 16,
-            paddingVertical: 10,
+            gap: 8,
+            marginBottom: 12,
           }}
         >
-          <View
-            style={{
-              backgroundColor: '#FFFFFF',
-              borderRadius: 999,
-              paddingHorizontal: 14,
-              paddingVertical: 8,
-              shadowColor: 'rgba(31,27,21,0.25)',
-              shadowOpacity: 1,
-              shadowRadius: 6,
-              shadowOffset: { width: 0, height: 2 },
-              elevation: 4,
-            }}
+          <Text
+            numberOfLines={1}
+            style={{ flexShrink: 1, fontSize: 15, fontWeight: '700', color: '#1F1B15' }}
           >
-            <Text style={{ fontSize: 18, fontWeight: '700', color: '#1F1B15' }}>
-              {t('stats.header', { name: currentCat.name })}
-            </Text>
-          </View>
+            {t('stats.header', { name: currentCat.name })}
+          </Text>
           <View style={{ flexDirection: 'row', gap: 6 }}>
             {RANGES.map((r) => {
               const active = r.key === rangeKey;
@@ -177,7 +178,7 @@ export default function StatsScreen() {
                   onPress={() => setRangeKey(r.key)}
                   style={{
                     paddingHorizontal: 12,
-                    paddingVertical: 6,
+                    paddingVertical: 5,
                     borderRadius: 999,
                     backgroundColor: active ? coat.accent : '#F6ECE3',
                   }}
@@ -190,9 +191,6 @@ export default function StatsScreen() {
             })}
           </View>
         </View>
-      }
-    >
-      <ScrollView contentContainerStyle={{ padding: 16 }}>
         <View style={{ flexDirection: 'column', gap: 8 }}>
           {days.map((day) => {
             const s = summaries[day] ?? EMPTY_SUMMARY;
