@@ -112,6 +112,10 @@ export const en: Translation = {
     noEntries: 'No entries',
     tapHint: 'Tap a day to open it in the journal',
     addCatFirst: 'Add a cat in settings first',
+    filter: 'Filter',
+    filterTitle: 'Show events',
+    hiddenByFilter: 'Hidden by filter',
+    allHidden: 'All events are hidden by the filter',
   },
   settings: {
     addCat: '+ Cat',

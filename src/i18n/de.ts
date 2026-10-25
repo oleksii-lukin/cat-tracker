@@ -112,6 +112,10 @@ export const de: Translation = {
     noEntries: 'Keine Einträge',
     tapHint: 'Tippe auf einen Tag, um ihn im Tagebuch zu öffnen',
     addCatFirst: 'Füge zuerst eine Katze in den Einstellungen hinzu',
+    filter: 'Filter',
+    filterTitle: 'Ereignisse anzeigen',
+    hiddenByFilter: 'Durch Filter ausgeblendet',
+    allHidden: 'Alle Ereignisse sind durch den Filter ausgeblendet',
   },
   settings: {
     addCat: '+ Katze',

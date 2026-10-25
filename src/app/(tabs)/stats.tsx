@@ -11,8 +11,11 @@ import { getCoat } from '@/constants/coats';
 import { getDaySummaries } from '@/db/repositories';
 import { useApp } from '@/context/app-context';
 import { ALL_EVENT_TYPES, getEventDef } from '@/domain/events';
+import { StatsFilterSheet } from '@/features/stats/components/StatsFilterSheet';
+import { hasAnyEvents } from '@/features/stats/filter';
+import { useStatsFilter } from '@/features/stats/useStatsFilter';
 import { eventLabel } from '@/i18n/event-label';
-import type { DaySummary, FeedKind, PeeVolume, Sex, StoolQuality } from '@/types/domain';
+import type { DaySummary, EventType, FeedKind, PeeVolume, Sex, StoolQuality } from '@/types/domain';
 import { addDays, formatDay, todayKey, weekdayShort } from '@/utils/dates';
 
 const RANGES = [
@@ -49,10 +52,20 @@ const EMPTY_SUMMARY: DaySummary = {
 export default function StatsScreen() {
   const { t } = useTranslation();
   const db = useSQLiteContext();
-  const { cats, currentCat, currentCatId, setCurrentCatId, setFocusDay, revision } = useApp();
+  const {
+    cats,
+    currentCat,
+    currentCatId,
+    setCurrentCatId,
+    setFocusDay,
+    revision,
+    quickActions,
+  } = useApp();
   const [rangeKey, setRangeKey] = useState<RangeKey>('week');
   const [summaries, setSummaries] = useState<Record<string, DaySummary>>({});
   const [loading, setLoading] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const filter = useStatsFilter(currentCatId, quickActions);
   // Защита от гонки: применяется только ответ самого позднего запроса,
   // а при смене кота сводки прошлого кота сбрасываются до загрузки новых.
   const requestId = useRef(0);
@@ -119,11 +132,11 @@ export default function StatsScreen() {
 
   // Generic types with a type-level amount (e.g. hairball paste in cm).
   // poop/pee/food have their own detailed formatting above.
-  const GENERIC_TYPES: string[] = ALL_EVENT_TYPES.filter(
+  const GENERIC_TYPES: EventType[] = ALL_EVENT_TYPES.filter(
     (et) => et !== 'poop' && et !== 'pee' && et !== 'food'
   );
 
-  const formatGeneric = (summary: DaySummary, type: string, sex: Sex): string | null => {
+  const formatGeneric = (summary: DaySummary, type: EventType, sex: Sex): string | null => {
     const count = summary.countsByType[type] ?? 0;
     if (count === 0) return null;
     const def = getEventDef(type);
@@ -149,6 +162,8 @@ export default function StatsScreen() {
 
   const coat = getCoat(currentCat.color);
   const catSex = currentCat.sex;
+  const isFiltered = filter.enabled.size < filter.types.length;
+  const filterTextColor = isFiltered ? coat.onAccent : '#56423C';
 
   return (
     <CoatFrame
@@ -191,19 +206,62 @@ export default function StatsScreen() {
                 </Pressable>
               );
             })}
+            <Pressable
+              onPress={() => setFilterOpen(true)}
+              testID="stats-filter-button"
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 4,
+                paddingHorizontal: 10,
+                paddingVertical: 5,
+                borderRadius: 999,
+                backgroundColor: isFiltered ? coat.accent : '#F6ECE3',
+              }}
+            >
+              <Text style={{ fontSize: 12, fontWeight: '700', color: filterTextColor }}>
+                {t('stats.filter')}
+              </Text>
+              {isFiltered ? (
+                <Text style={{ fontSize: 11, fontWeight: '700', color: filterTextColor }}>
+                  {filter.enabled.size}/{filter.types.length}
+                </Text>
+              ) : null}
+            </Pressable>
           </View>
         </View>
+        {filter.enabled.size === 0 ? (
+          <View
+            style={{
+              backgroundColor: '#F6ECE3',
+              borderRadius: 12,
+              paddingHorizontal: 12,
+              paddingVertical: 8,
+              marginBottom: 8,
+            }}
+          >
+            <Text style={{ fontSize: 12, fontWeight: '600', color: '#56423C', textAlign: 'center' }}>
+              {t('stats.allHidden')}
+            </Text>
+          </View>
+        ) : null}
         <View style={{ flexDirection: 'column', gap: 8 }}>
           {days.map((day) => {
             const s = summaries[day] ?? EMPTY_SUMMARY;
             const isToday = day === todayKey();
-            const foodLine = formatFood(s, catSex);
-            const peeLine = formatPee(s, catSex);
-            const poopLine = formatPoop(s, catSex);
-            const genericLines = GENERIC_TYPES.map((type) => ({ type, line: formatGeneric(s, type, catSex) })).filter(
-              (x): x is { type: string; line: string } => x.line !== null
-            );
+            const foodLine = filter.enabled.has('food') ? formatFood(s, catSex) : null;
+            const peeLine = filter.enabled.has('pee') ? formatPee(s, catSex) : null;
+            const poopLine = filter.enabled.has('poop') ? formatPoop(s, catSex) : null;
+            const genericLines = GENERIC_TYPES.filter((type) => filter.enabled.has(type))
+              .map((type) => ({ type, line: formatGeneric(s, type, catSex) }))
+              .filter((x): x is { type: EventType; line: string } => x.line !== null);
             const isEmpty = !foodLine && !peeLine && !poopLine && genericLines.length === 0;
+            // День может быть непустым в БД, но полностью скрытым фильтром.
+            const statusText = isEmpty
+              ? hasAnyEvents(s)
+                ? t('stats.hiddenByFilter')
+                : t('stats.noEntries')
+              : null;
             return (
               <Pressable
                 key={day}
@@ -223,8 +281,8 @@ export default function StatsScreen() {
                   <Text style={{ fontSize: 13, fontWeight: '700', color: '#1F1B15' }}>
                     {weekdayShort(day)}, {formatDay(day)}
                   </Text>
-                  {isEmpty ? (
-                    <Text style={{ fontSize: 11, color: '#A49C93' }}>{t('stats.noEntries')}</Text>
+                  {statusText ? (
+                    <Text style={{ fontSize: 11, color: '#A49C93' }}>{statusText}</Text>
                   ) : null}
                 </View>
                 {isEmpty ? null : (
@@ -264,6 +322,14 @@ export default function StatsScreen() {
           {loading ? t('common.loading') : t('stats.tapHint')}
         </Text>
       </ScrollView>
+      <StatsFilterSheet
+        visible={filterOpen}
+        types={filter.types}
+        enabled={filter.enabled}
+        sex={catSex}
+        onToggle={filter.toggle}
+        onClose={() => setFilterOpen(false)}
+      />
     </CoatFrame>
   );
 }

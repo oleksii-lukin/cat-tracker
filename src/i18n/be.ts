@@ -118,6 +118,10 @@ export const be: Translation = {
     noEntries: 'Няма запісаў',
     tapHint: 'Тап па дні — адкрыць яго ў дзённіку',
     addCatFirst: 'Спачатку дадайце ката ў наладах',
+    filter: 'Фільтр',
+    filterTitle: 'Паказваць падзеі',
+    hiddenByFilter: 'Схавана фільтрам',
+    allHidden: 'Усе падзеі схаваныя фільтрам',
   },
   settings: {
     addCat: '+ Кот',

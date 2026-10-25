@@ -112,6 +112,10 @@ export const fr: Translation = {
     noEntries: 'Aucune saisie',
     tapHint: 'Touchez un jour pour l’ouvrir dans le journal',
     addCatFirst: 'Ajoutez d’abord un chat dans les réglages',
+    filter: 'Filtre',
+    filterTitle: 'Afficher les événements',
+    hiddenByFilter: 'Masqué par le filtre',
+    allHidden: 'Tous les événements sont masqués par le filtre',
   },
   settings: {
     addCat: '+ Chat',

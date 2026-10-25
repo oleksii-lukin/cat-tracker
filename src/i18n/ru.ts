@@ -116,6 +116,10 @@ export const ru = {
     noEntries: 'Нет записей',
     tapHint: 'Тап по дню — открыть его в дневнике',
     addCatFirst: 'Сначала добавьте кота в настройках',
+    filter: 'Фильтр',
+    filterTitle: 'Показывать события',
+    hiddenByFilter: 'Скрыто фильтром',
+    allHidden: 'Все события скрыты фильтром',
   },
   settings: {
     addCat: '+ Кот',

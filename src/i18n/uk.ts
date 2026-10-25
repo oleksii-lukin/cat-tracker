@@ -118,6 +118,10 @@ export const uk: Translation = {
     noEntries: 'Немає записів',
     tapHint: 'Тап по дню — відкрити його в щоденнику',
     addCatFirst: 'Спочатку додайте кота в налаштуваннях',
+    filter: 'Фільтр',
+    filterTitle: 'Показувати події',
+    hiddenByFilter: 'Приховано фільтром',
+    allHidden: 'Усі події приховано фільтром',
   },
   settings: {
     addCat: '+ Кіт',

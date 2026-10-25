@@ -112,6 +112,10 @@ export const es: Translation = {
     noEntries: 'Sin registros',
     tapHint: 'Toca un día para abrirlo en el diario',
     addCatFirst: 'Primero añade un gato en los ajustes',
+    filter: 'Filtro',
+    filterTitle: 'Mostrar eventos',
+    hiddenByFilter: 'Oculto por el filtro',
+    allHidden: 'Todos los eventos están ocultos por el filtro',
   },
   settings: {
     addCat: '+ Gato',
