@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+import { ActionTypeRow } from '@/components/action-type-row';
 import { EventFieldRenderer } from '@/components/event-fields';
 import { TimePill, type DateTimeValue } from '@/components/time-pill';
 import { CatAvatar } from '@/components/cat-avatar';
@@ -24,7 +25,6 @@ import {
   type EventDraft,
 } from '@/domain/events';
 import { QUICK_ACTIONS_REGISTRY, getEnabledSorted } from '@/domain/quick-actions';
-import { eventLabel } from '@/i18n/event-label';
 import type { Cat, EventType, Feed } from '@/types/domain';
 import { dayKey, formatTime } from '@/utils/dates';
 import { uuid } from '@/utils/id';
@@ -154,41 +154,15 @@ export function QuickAddPanel({ cat, feeds, onMutated }: Props) {
         <TimePill value={dateTime} onChange={setDateTime} catColor={coat.accent} />
       </View>
 
-      <View style={{ flexDirection: 'row', gap: 8 }}>
-        {enabledQuickActions.map((quickDef) => {
-          const at = quickDef.id;
-          const eventDef = getEventDef(at);
-          const active = expanded === at;
-          return (
-            <Pressable
-              key={at}
-              onPress={() => toggleExpanded(at)}
-              testID={`quickadd-${at}`}
-              style={{
-                flex: 1,
-                alignItems: 'center',
-                paddingVertical: 12,
-                borderRadius: 14,
-                backgroundColor: active ? eventDef.soft : '#F6ECE3',
-                borderWidth: active ? 2 : 0,
-                borderColor: eventDef.main,
-              }}
-            >
-              <Text style={{ fontSize: 18 }}>{eventDef.emoji}</Text>
-              <Text
-                style={{
-                  fontSize: 12,
-                  fontWeight: '700',
-                  color: active ? eventDef.main : '#56423C',
-                  marginTop: 2,
-                }}
-              >
-                {eventLabel(t, eventDef.labelKey, cat.sex)}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
+      <ActionTypeRow
+        types={enabledQuickActions.map((quickDef) => quickDef.id)}
+        active={expanded}
+        onSelect={toggleExpanded}
+        sex={cat.sex}
+        size="md"
+        testIDPrefix="quickadd"
+        horizontalInset={16 * 2 + 14 * 2}
+      />
 
       {expanded && def ? (
         <View style={{ marginTop: 12 }}>

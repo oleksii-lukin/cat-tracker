@@ -12,6 +12,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 
+import { ActionTypeRow } from '@/components/action-type-row';
 import { EventFieldRenderer } from '@/components/event-fields';
 import { TimePill, type DateTimeValue } from '@/components/time-pill';
 import { savePhotoAsset } from '@/db/repositories';
@@ -93,32 +94,16 @@ export function EventSheet({ event, feeds, catColor, sex, onSave, onDelete, onCl
               </Pressable>
             </View>
 
-            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
-              {ALL_EVENT_TYPES.map((et) => {
-                const etDef = getEventDef(et);
-                const active = et === type;
-                return (
-                  <Pressable
-                    key={et}
-                    onPress={() => setType(et)}
-                    testID={`event-type-${et}`}
-                    style={{
-                      flex: 1,
-                      alignItems: 'center',
-                      paddingVertical: 10,
-                      borderRadius: 12,
-                      backgroundColor: active ? etDef.soft : '#F6ECE3',
-                      borderWidth: active ? 2 : 0,
-                      borderColor: etDef.main,
-                    }}
-                  >
-                    <Text style={{ fontSize: 16 }}>{etDef.emoji}</Text>
-                    <Text style={{ fontSize: 11, fontWeight: '700', color: active ? etDef.main : '#56423C' }}>
-                      {eventLabel(t, etDef.labelKey, sex)}
-                    </Text>
-                  </Pressable>
-                );
-              })}
+            <View style={{ marginBottom: 12 }}>
+              <ActionTypeRow
+                types={ALL_EVENT_TYPES}
+                active={type}
+                onSelect={setType}
+                sex={sex}
+                size="sm"
+                testIDPrefix="event-type"
+                horizontalInset={20 * 2}
+              />
             </View>
 
             <TimePill value={dateTime} onChange={setDateTime} catColor={catColor} />
