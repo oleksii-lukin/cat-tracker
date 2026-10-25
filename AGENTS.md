@@ -21,7 +21,19 @@ npx expo-doctor             # diagnose dependency and config issues
 npx expo install --fix      # fix incompatible package versions
 ```
 
-Run lint and typecheck before declaring any task done.
+### Checks the agent runs itself — explicit exception for this repo
+
+The global agent config (`~/.config/opencode/instructions.md`) forbids lint/typecheck commands (`npx eslint`, `npx tsc`, `npm run lint`, `npm run typecheck`) and leaves them to the user. **This project is an explicit exception: in this repo the agent runs all three checks itself.** After any code change, before reporting the task done, run:
+
+```bash
+npx expo lint        # ESLint via Expo — code style and lint rules only
+npx tsc --noEmit     # typecheck
+npx expo-doctor      # dependency & config health — NOT part of lint, run it separately
+```
+
+`expo doctor` is not included in `expo lint`: lint runs ESLint only, expo-doctor checks the installed dependencies against the Expo SDK, `app.json`, lockfile and project structure.
+
+Commands from the global prohibition that stay off-limits here: package-manager installs/updates (`npm install`, `npm ci`, `yarn`, `pnpm`), `npm run lint`, `npm run typecheck`.
 
 ## Navigation & Routing
 
