@@ -29,6 +29,7 @@ export function CatChips({ cats, currentCatId, onSelect }: Props) {
           <Pressable
             key={cat.id}
             onPress={() => onSelect(cat.id)}
+            testID={`cat-chip-${cat.name}`}
             style={{
               flexDirection: 'row',
               alignItems: 'center',

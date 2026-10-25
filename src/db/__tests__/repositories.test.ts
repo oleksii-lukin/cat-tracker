@@ -395,6 +395,27 @@ describe('getDaySummaries', () => {
     const day5 = summaries['2026-01-05'];
     expect(day5.amountsByType).toEqual({ hairball: { totalAmount: 3, eventsWithoutAmount: 1 } });
   });
+
+  it('изоляция по cat_id: сводки двух котов не смешиваются', async () => {
+    const db = await freshDb();
+    const cat = await seedEvents(db);
+    const other = (await listCats(db)).find((c) => c.name === 'Другой')!;
+
+    // День с записями только у «Другого» — не должен появиться у «Барсика»
+    await createEvent(db, { catId: other.id, type: 'food', eventDate: '2026-01-07', eventTime: '10:00' });
+
+    const mine = await getDaySummaries(db, cat.id, '2026-01-01', '2026-01-31');
+    const theirs = await getDaySummaries(db, other.id, '2026-01-01', '2026-01-31');
+
+    // «Барсик»: без +1 poop и без еды «Другого»
+    expect(mine['2026-01-05'].countsByType.poop).toBe(2);
+    expect(mine['2026-01-07']).toBeUndefined();
+
+    // «Другой»: только свои события, день «Барсика» без еды (2026-01-06) не виден
+    expect(theirs['2026-01-05'].countsByType).toEqual({ poop: 1 });
+    expect(theirs['2026-01-07'].foodEvents).toBe(1);
+    expect(theirs['2026-01-06']).toBeUndefined();
+  });
 });
 
 /* ---------- localizePresetFeeds ---------- */

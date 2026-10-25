@@ -1,0 +1,218 @@
+# Критический путь 6: переключение котов и изоляция данных между ними.
+# Идемпотентен: создаёт только отсутствующих котов по имени («Маркиз», «Дуся»).
+# «Буся» — временная для проверки удаления текущего кота: удаляется в конце
+# и пересоздаётся следующим прогоном.
+# Предполагает датасет 01 («Тестя») и запись кормления из 02 или seed week-history.
+appId: com.llamerr.cattracker
+name: '06 Cat switching'
+---
+- extendedWaitUntil:
+    visible: 'Дневник'
+    timeout: 60000
+
+# --- 1. Два постоянных кота, если их ещё нет --------------------------------
+- tapOn: 'Настройки'
+
+# Экран мог отскроллиться с прошлого раза — возвращаемся к секции «Коты».
+- scrollUntilVisible:
+    element:
+      text: 'Коты'
+    direction: UP
+    timeout: 5000
+
+- runFlow:
+    when:
+      notVisible: 'Маркиз'
+    commands:
+      - tapOn:
+          id: 'add-cat-button'
+      - extendedWaitUntil:
+          visible: 'Новый кот'
+          timeout: 10000
+      - tapOn:
+          id: 'cat-name-input'
+      - inputText: 'Маркиз'
+      - hideKeyboard
+      - tapOn:
+          id: 'sex-option-male'
+      - tapOn:
+          id: 'coat-option-black'
+      - tapOn:
+          id: 'cat-save-button'
+      - extendedWaitUntil:
+          visible: 'Маркиз'
+          timeout: 10000
+
+- runFlow:
+    when:
+      notVisible: 'Дуся'
+    commands:
+      - tapOn:
+          id: 'add-cat-button'
+      - extendedWaitUntil:
+          visible: 'Новый кот'
+          timeout: 10000
+      - tapOn:
+          id: 'cat-name-input'
+      - inputText: 'Дуся'
+      - hideKeyboard
+      - tapOn:
+          id: 'sex-option-female'
+      - tapOn:
+          id: 'coat-option-white'
+      - tapOn:
+          id: 'cat-save-button'
+      - extendedWaitUntil:
+          visible: 'Дуся'
+          timeout: 10000
+
+- assertVisible: 'Маркиз'
+- assertVisible: 'Дуся'
+
+# --- 2. Переключение в Дневнике + запись для «Маркиза» ----------------------
+- tapOn: 'Дневник'
+- extendedWaitUntil:
+    visible: 'Быстрая запись'
+    timeout: 10000
+
+- tapOn:
+    id: 'cat-chip-Маркиз'
+
+- tapOn:
+    id: 'quickadd-food'
+- extendedWaitUntil:
+    visible: 'Сохранить событие'
+    timeout: 10000
+- tapOn: 'Сохранить событие'
+- extendedWaitUntil:
+    visible: 'Мокрый корм .ложки.'
+    timeout: 15000
+
+# --- 3. Изоляция данных в Дневнике ------------------------------------------
+# У «Дуси» нет записей — её лента пуста, несмотря на данные других котов.
+- scrollUntilVisible:
+    element:
+      id: 'cat-chip-Дуся'
+    direction: RIGHT
+    timeout: 10000
+- tapOn:
+    id: 'cat-chip-Дуся'
+- extendedWaitUntil:
+    visible: 'Пока пусто'
+    timeout: 15000
+- assertVisible:
+    id: 'cat-chip-Дуся'
+
+# У «Тести» записи на месте (02 или seed).
+- tapOn:
+    id: 'cat-chip-Тестя'
+- extendedWaitUntil:
+    visible:
+      id: 'event-card-food'
+    timeout: 15000
+
+# --- 4. Статистика: заголовок и данные следуют за котом ----------------------
+- tapOn: 'Статистика'
+- extendedWaitUntil:
+    visible: 'Статистика · Тестя'
+    timeout: 15000
+
+# Дни «Дуси» пустые — сводки не подмешиваются от других котов.
+- tapOn:
+    id: 'cat-chip-Дуся'
+- extendedWaitUntil:
+    visible: 'Статистика · Дуся'
+    timeout: 10000
+- extendedWaitUntil:
+    visible: 'Нет записей'
+    timeout: 10000
+- assertNotVisible: 'Поела:.*'
+
+# У «Маркиза» есть кормление из шага 2 — заголовок и данные свои.
+- tapOn:
+    id: 'cat-chip-Маркиз'
+- extendedWaitUntil:
+    visible: 'Статистика · Маркиз'
+    timeout: 10000
+- extendedWaitUntil:
+    visible: 'Поела:.*'
+    timeout: 10000
+
+# --- 5. Удаление текущего кота → фолбэк на cats[0] ---------------------------
+- tapOn: 'Настройки'
+- scrollUntilVisible:
+    element:
+      text: 'Коты'
+    direction: UP
+    timeout: 5000
+
+- runFlow:
+    when:
+      notVisible: 'Буся'
+    commands:
+      - tapOn:
+          id: 'add-cat-button'
+      - extendedWaitUntil:
+          visible: 'Новый кот'
+          timeout: 10000
+      - tapOn:
+          id: 'cat-name-input'
+      - inputText: 'Буся'
+      - hideKeyboard
+      - tapOn:
+          id: 'sex-option-male'
+      - tapOn:
+          id: 'coat-option-gray'
+      - tapOn:
+          id: 'cat-save-button'
+      - assertNotVisible: 'Новый кот'
+
+# Делаем «Буся» текущей: чип может быть за краем ряда — прокручиваем.
+- tapOn: 'Дневник'
+- extendedWaitUntil:
+    visible: 'Быстрая запись'
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      id: 'cat-chip-Буся'
+    direction: RIGHT
+    timeout: 10000
+- tapOn:
+    id: 'cat-chip-Буся'
+
+# Удаляем её из настроек (в модалке — «Удалить», затем подтверждение в алерте).
+- tapOn: 'Настройки'
+- scrollUntilVisible:
+    element:
+      text: 'Буся'
+    direction: DOWN
+    timeout: 5000
+- tapOn: 'Буся'
+- extendedWaitUntil:
+    visible: 'Редактировать: Буся'
+    timeout: 10000
+- tapOn: 'Удалить'
+# Нативный алерт «Удалить Буся?». В алерте и в модалке текст кнопки одинаковый —
+# если тап попадёт в кнопку модалки, заменить на `tapOn: { text: 'Удалить', index: 1 }`.
+- extendedWaitUntil:
+    visible: 'Удалить Буся?'
+    timeout: 10000
+- tapOn: 'Удалить'
+
+- extendedWaitUntil:
+    visible: 'Коты'
+    timeout: 10000
+- assertNotVisible: 'Буся'
+- assertVisible: 'Маркиз'
+- assertVisible: 'Дуся'
+
+# Текущим был удалённый «Буся» → контекст откатился на cats[0] («Тестя»).
+- tapOn: 'Статистика'
+- extendedWaitUntil:
+    visible: 'Статистика · Тестя'
+    timeout: 15000
+- tapOn: 'Дневник'
+- assertNotVisible:
+    id: 'cat-chip-Буся'
+- assertVisible:
+    id: 'cat-chip-Тестя'

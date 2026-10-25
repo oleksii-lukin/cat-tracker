@@ -2,9 +2,10 @@ import React from 'react';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import type { SQLiteDatabase } from 'expo-sqlite';
 
+import type { Cat } from '@/types/domain';
 import { createTestDb } from '@/db/__tests__/test-db';
 import { migrateDbIfNeeded } from '@/db/migrate';
-import { getMeta } from '@/db/repositories';
+import { createCat, getMeta, softDeleteCat } from '@/db/repositories';
 import { AppProvider, useApp } from '@/context/app-context';
 import {
   DEFAULT_QUICK_ACTIONS,
@@ -95,5 +96,68 @@ describe('AppContext: quickActions', () => {
     await waitFor(() =>
       expect(second.result.current.quickActions.find((c) => c.id === 'pee')?.enabled).toBe(false)
     );
+  });
+});
+
+/* ---------- Cats: выбор и фолбэк текущего кота ---------- */
+
+/** Создаёт котов с детерминированным created_at (в одном тесте nowIso совпадает). */
+async function setupWithCats(names: string[]) {
+  mockDb = await createTestDb();
+  await migrateDbIfNeeded(mockDb);
+
+  const created: Cat[] = [];
+  for (let i = 0; i < names.length; i += 1) {
+    created.push(
+      await createCat(mockDb, { name: names[i], sex: 'unknown', birthDate: null, color: 'gray' })
+    );
+    await mockDb.runAsync(
+      `UPDATE cats SET created_at = ? WHERE id = ?`,
+      `2026-01-0${i + 1}T00:00:00.000Z`,
+      created[i].id
+    );
+  }
+
+  const utils = renderHook(() => useApp(), { wrapper });
+  await waitFor(() => expect(utils.result.current.cats).toHaveLength(names.length));
+  return { utils, created };
+}
+
+describe('AppContext: cats', () => {
+  it('загружает котов по created_at ASC и выбирает первого по умолчанию', async () => {
+    const { utils } = await setupWithCats(['Тестя', 'Маркиз', 'Дуся']);
+
+    expect(utils.result.current.cats.map((c) => c.name)).toEqual(['Тестя', 'Маркиз', 'Дуся']);
+    expect(utils.result.current.currentCat?.name).toBe('Тестя');
+    expect(utils.result.current.currentCatId).toBe(utils.result.current.cats[0].id);
+  });
+
+  it('setCurrentCatId переключает текущего кота', async () => {
+    const { utils, created } = await setupWithCats(['Тестя', 'Маркиз']);
+
+    await act(async () => {
+      utils.result.current.setCurrentCatId(created[1].id);
+    });
+
+    expect(utils.result.current.currentCat?.id).toBe(created[1].id);
+    expect(utils.result.current.currentCatId).toBe(created[1].id);
+  });
+
+  it('после удаления текущего кота — фолбэк на cats[0]', async () => {
+    const { utils, created } = await setupWithCats(['Тестя', 'Маркиз']);
+
+    await act(async () => {
+      utils.result.current.setCurrentCatId(created[1].id);
+    });
+    expect(utils.result.current.currentCat?.name).toBe('Маркиз');
+
+    await act(async () => {
+      await softDeleteCat(mockDb, created[1].id);
+      await utils.result.current.refreshCats();
+    });
+
+    expect(utils.result.current.cats.map((c) => c.name)).toEqual(['Тестя']);
+    expect(utils.result.current.currentCat?.name).toBe('Тестя');
+    expect(utils.result.current.currentCatId).toBe(created[0].id);
   });
 });

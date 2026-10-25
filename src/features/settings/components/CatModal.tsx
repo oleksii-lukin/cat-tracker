@@ -84,6 +84,7 @@ export function CatModal({
                     <Pressable
                       key={opt.value}
                       onPress={() => onSexChange(opt.value)}
+                      testID={`sex-option-${opt.value}`}
                       style={[
                         styles.sexButton,
                         { backgroundColor: active ? coat.accent : Design.colors.surfaceContainer },
@@ -119,6 +120,7 @@ export function CatModal({
                     <Pressable
                       key={c.id}
                       onPress={() => onColorChange(c.id)}
+                      testID={`coat-option-${c.id}`}
                       style={[
                         styles.coatButton,
                         { borderWidth: active ? 3 : 1, borderColor: active ? Design.colors.text : Design.colors.outlineVariant },

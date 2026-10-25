@@ -2,7 +2,7 @@
 // Схема берётся из src/db/schema.ts — того же источника, что и миграция приложения.
 // Запуск из WSL:
 //   node scripts/e2e-seed.mjs empty        > cat-tracker.db без котов (журнал пуст)
-//   node scripts/e2e-seed.mjs week-history > кот «Тестя» + история за 7 дней
+//   node scripts/e2e-seed.mjs week-history > коты «Тестя», «Маркиз», «Дуся» + история за 7 дней
 // Затем БД доставляется на эмулятор (см. README, «Сброс и seed состояния для e2e»).
 //
 // Время моделируется датами в строках, а не переводом часов устройства:
@@ -28,6 +28,9 @@ const PRESET_FEEDS = [
   { id: SEED_FEED_DRY, name: 'Сухой корм (граммы)', kind: 'dry', unit: 'gram' },
 ];
 
+// Постоянный набор для переключения: три кота с разной шерстью, чтобы чипы
+// и акцентный цвет визуально различались. created_at задаёт порядок чипов:
+// cats[0] = «Тестя» — текущий кот при старте приложения.
 const CAT = {
   id: 'seed-cat-1',
   name: 'Тестя',
@@ -35,6 +38,26 @@ const CAT = {
   birthDate: '2024-03-01',
   color: 'calico',
   createdAt: '2026-01-01T09:00:00.000Z',
+};
+
+const CAT_MARQUIS = {
+  id: 'seed-cat-2',
+  name: 'Маркиз',
+  sex: 'male',
+  birthDate: '2023-05-12',
+  color: 'black',
+  createdAt: '2026-01-01T09:05:00.000Z',
+};
+
+// Дуся — без единой записи: проверка изоляции данных между котами
+// (её лента пуста, хотя у Тести и Маркиза есть события).
+const CAT_DUSYA = {
+  id: 'seed-cat-3',
+  name: 'Дуся',
+  sex: 'female',
+  birthDate: '2025-01-20',
+  color: 'white',
+  createdAt: '2026-01-01T09:10:00.000Z',
 };
 
 function dayKey(date) {
@@ -98,9 +121,11 @@ function insertWeight(db, w) {
   );
 }
 
-/** Кот «Тестя» с историей за 7 дней: еда/стул/пи каждый день + вес и заметка. */
+/** Три кота: «Тестя» — история за 7 дней, «Маркиз» — две записи за последние дни, «Дуся» — пустая. */
 function seedWeekHistory(db) {
   insertCat(db, CAT);
+  insertCat(db, CAT_MARQUIS);
+  insertCat(db, CAT_DUSYA);
 
   for (let d = 6; d >= 0; d -= 1) {
     const date = daysAgo(d);
@@ -119,6 +144,12 @@ function seedWeekHistory(db) {
   insertNote(db, { catId: CAT.id, day: daysAgo(2), time: '18:40', text: 'Играла, ела с аппетитом' });
   insertWeight(db, { catId: CAT.id, grams: 4100, on: daysAgo(6) });
   insertWeight(db, { catId: CAT.id, grams: 4150, on: daysAgo(1) });
+
+  // Маркиз: только вчера и сегодня — в «Неделе» его дни заметно короче, чем у Тести.
+  insertEvent(db, { catId: CAT_MARQUIS.id, type: 'food', date: daysAgo(1), time: '07:45', feedId: SEED_FEED_DRY, amount: 120 });
+  insertEvent(db, { catId: CAT_MARQUIS.id, type: 'poop', date: daysAgo(1), time: '20:15', stoolQuality: 'normal' });
+  insertEvent(db, { catId: CAT_MARQUIS.id, type: 'pee', date: daysAgo(0), time: '11:20', peeVolume: 'small' });
+  insertWeight(db, { catId: CAT_MARQUIS.id, grams: 5200, on: daysAgo(1) });
 }
 
 const SCENARIOS = {
