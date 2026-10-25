@@ -18,6 +18,8 @@ import type {
 } from '@/types/domain';
 import { nowIso, uuid } from '@/utils/id';
 
+import { PHOTOS_DIR_NAME } from './schema';
+
 /* ---------- Cats ---------- */
 
 interface CatRow {
@@ -542,7 +544,7 @@ export async function getDaySummaries(
 
 export async function savePhotoAsset(sourceUri: string, eventId: string): Promise<string> {
   const { Directory, File, Paths } = await import('expo-file-system');
-  const photosDir = new Directory(Paths.document, 'photos');
+  const photosDir = new Directory(Paths.document, PHOTOS_DIR_NAME);
   if (!photosDir.exists) {
     photosDir.create();
   }

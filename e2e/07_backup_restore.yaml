@@ -1,0 +1,118 @@
+# Критический путь 7: резервная копия и восстановление.
+# Тестирует ОСНОВНОЙ путь: экспорт в папку по умолчанию (без системных диалогов)
+# и восстановление из списка бэкапов внутри приложения. Нужен dev-сборка.
+# Секция резервных копий и версия — внизу экрана настроек: нужен скролл.
+# Предполагает кота «Тестя» от 01_first_cat.
+# Вне покрытия (ручная проверка): шеринг, ручной выбор файла, несовместимая версия БД.
+appId: com.llamerr.cattracker
+name: '07 Backup and restore'
+---
+- extendedWaitUntil:
+    visible: 'Дневник'
+    timeout: 60000
+
+- tapOn: 'Настройки'
+
+# Секция внизу экрана — прокручиваем к ней.
+- scrollUntilVisible:
+    direction: DOWN
+    element:
+      id: 'backup-export'
+    timeout: 10000
+
+# Метка локации по умолчанию (баннер предупреждения).
+- assertVisible:
+    id: 'backup-warning'
+
+# Экспорт в стандартную папку — алерт успеха без системных диалогов.
+# Текст селекторов в Maestro — regex на весь текст элемента, а сообщение
+# динамическое (с именем файла) — обрамляем .*.
+- tapOn:
+    id: 'backup-export'
+
+- extendedWaitUntil:
+    visible: '.*Резервная копия сохранена.*'
+    timeout: 30000
+
+- tapOn: 'ОК'
+
+# Проверка: бэкап появился в списке доступных бэкапов (список ниже кнопки).
+- scrollUntilVisible:
+    direction: DOWN
+    element:
+      id: 'backup-item-0'
+    timeout: 10000
+
+- assertVisible:
+    id: 'backup-item-0'
+
+# Меняем данные в БД: добавляем второго кота (поле ввода пустое — без erase).
+- tapOn:
+    id: 'add-cat-button'
+
+- extendedWaitUntil:
+    visible: 'Новый кот'
+    timeout: 10000
+
+- tapOn:
+    id: 'cat-name-input'
+
+- inputText: 'Мурзик'
+
+- hideKeyboard
+
+- tapOn:
+    id: 'cat-save-button'
+
+# Экран всё ещё прокручен вниз к бэкапам, а коты — наверху: скроллим вверх.
+- scrollUntilVisible:
+    direction: UP
+    element:
+      text: 'Мурзик'
+    timeout: 10000
+
+- extendedWaitUntil:
+    visible: 'Мурзик'
+    timeout: 10000
+
+# Восстанавливаемся из бэкапа (создан до добавления кота):
+# возвращаемся вниз к списку бэкапов.
+- scrollUntilVisible:
+    direction: DOWN
+    element:
+      id: 'backup-item-0'
+    timeout: 10000
+
+- tapOn:
+    id: 'backup-item-0'
+
+# '?' в конце — спецсимвол regex, поэтому матчим по префиксу с .*.
+- extendedWaitUntil:
+    visible: '.*Восстановить из резервной копии.*'
+    timeout: 10000
+
+- tapOn: 'Восстановить'
+
+# Приложение перезагрузилось (пересоздание провайдера БД):
+# второй кот исчез, исходные данные на месте (экран открыт сверху).
+- extendedWaitUntil:
+    visible: 'Дневник'
+    timeout: 60000
+
+- tapOn: 'Настройки'
+
+- extendedWaitUntil:
+    visible: 'Тестя'
+    timeout: 10000
+
+- assertNotVisible: 'Мурзик'
+
+# Секция «О приложении» с версией — в самом низу.
+- scrollUntilVisible:
+    direction: DOWN
+    element:
+      id: 'version-value'
+    timeout: 10000
+
+- assertVisible:
+    id: 'version-value'

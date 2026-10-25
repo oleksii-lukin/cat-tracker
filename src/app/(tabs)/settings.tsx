@@ -8,10 +8,13 @@ import { DEFAULT_COAT, getCoat } from '@/constants/coats';
 
 import { CatsSection } from '@/features/settings/components/CatsSection';
 import { CatModal } from '@/features/settings/components/CatModal';
+import { BackupSection } from '@/features/settings/components/BackupSection';
 import { FeedsSection } from '@/features/settings/components/FeedsSection';
 import { FeedModal } from '@/features/settings/components/FeedModal';
 import { LanguageSection } from '@/features/settings/components/LanguageSection';
 import { QuickBlocksSection } from '@/features/settings/components/QuickBlocksSection';
+import { VersionSection } from '@/features/settings/components/VersionSection';
+import { useBackup } from '@/features/settings/hooks/useBackup';
 import { useCatForm } from '@/features/settings/hooks/useCatForm';
 import { useFeedForm } from '@/features/settings/hooks/useFeedForm';
 
@@ -32,6 +35,7 @@ export default function SettingsScreen() {
 
   const catForm = useCatForm({ onSaved: refreshCats });
   const feedForm = useFeedForm({ onSaved: refreshFeeds });
+  const backup = useBackup();
 
   const previewCoat = catForm.modal
     ? getCoat(catForm.color)
@@ -66,6 +70,19 @@ export default function SettingsScreen() {
           onMove={(id, dir) => void moveQuickAction(id, dir)}
         />
         <LanguageSection languagePref={languagePref} onChange={(pref) => void setLanguage(pref)} />
+        <BackupSection
+          busy={backup.busy}
+          folder={backup.folder}
+          backups={backup.backups}
+          isDefaultFolder={backup.isDefaultFolder}
+          canChangeFolder={backup.canChangeFolder}
+          onExport={() => void backup.exportBackup()}
+          onShare={() => void backup.shareBackup()}
+          onRestore={(item) => void backup.restoreBackup(item)}
+          onManualImport={() => void backup.importManually()}
+          onChangeFolder={() => void backup.changeFolder()}
+        />
+        <VersionSection />
       </ScrollView>
 
       <CatModal

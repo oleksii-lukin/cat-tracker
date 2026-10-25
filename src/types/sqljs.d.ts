@@ -12,6 +12,8 @@ declare module 'sql.js' {
     exec(sql: string): { columns: string[]; values: unknown[][] }[];
     run(sql: string, params?: unknown[]): void;
     prepare(sql: string): Statement;
+    /** Сериализует БД в байты файла (аналог .dump, включая user_version). */
+    export(): Uint8Array;
     close(): void;
   }
 

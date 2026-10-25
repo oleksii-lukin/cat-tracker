@@ -50,8 +50,26 @@
         "expo-localization",
         {
           "supportedLocales": {
-            "ios": ["ru", "uk", "be", "en", "es", "de", "it", "fr"],
-            "android": ["ru", "uk", "be", "en", "es", "de", "it", "fr"]
+            "ios": [
+              "ru",
+              "uk",
+              "be",
+              "en",
+              "es",
+              "de",
+              "it",
+              "fr"
+            ],
+            "android": [
+              "ru",
+              "uk",
+              "be",
+              "en",
+              "es",
+              "de",
+              "it",
+              "fr"
+            ]
           }
         }
       ],
@@ -61,6 +79,14 @@
           "backgroundColor": "#FFF8F3",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
+        }
+      ],
+      "expo-sharing",
+      [
+        "expo-file-system",
+        {
+          "enableFileSharing": true,
+          "supportsOpeningDocumentsInPlace": true
         }
       ]
     ],

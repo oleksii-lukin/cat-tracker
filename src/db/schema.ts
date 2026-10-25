@@ -10,6 +10,15 @@ export const DATABASE_VERSION = 2;
 export const SEED_FEED_WET = 'a0000000-0000-4000-8000-00000000feed1';
 export const SEED_FEED_DRY = 'a0000000-0000-4000-8000-00000000feed2';
 
+/** Папка с фотографиями событий в Documents (в архиве бэкапа — то же имя). */
+export const PHOTOS_DIR_NAME = 'cat_tracker_photos';
+
+/** Папка резервных копий внутри Documents приложения (локация по умолчанию). */
+export const BACKUP_DIR_NAME = 'CatTracker_backups';
+
+/** Префикс имён файлов резервных копий (без него файл в список не попадает). */
+export const BACKUP_FILE_PREFIX = 'CatTracker-backup-';
+
 /** Схема свежей БД (v0 → текущая версия). */
 export const SCHEMA_V0_SQL = `
 PRAGMA journal_mode = 'wal';
