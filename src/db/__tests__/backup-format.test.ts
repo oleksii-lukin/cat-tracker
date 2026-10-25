@@ -6,6 +6,7 @@ import {
   buildBackupFileName,
   checkBackupArchive,
   createBackupZip,
+  documentDisplayName,
   isBackupFileName,
   parseBackupFileName,
   readBackupZip,
@@ -51,6 +52,40 @@ describe('buildBackupFileName / parseBackupFileName', () => {
     expect(isBackupFileName('CatTracker-backup-2026-10-25_1432_app1.0.0_db2.zip')).toBe(true);
     expect(isBackupFileName('CatTracker-backup-2026-10-25_1432_app1.0.0_db2')).toBe(true);
     expect(isBackupFileName('other.zip')).toBe(false);
+  });
+});
+
+describe('documentDisplayName', () => {
+  const NAME = 'CatTracker-backup-2026-10-25_1432_app1.0.0_db2.zip';
+
+  it('SAF documentId с вложенной папкой (primary:Download/Backups/file.zip)', () => {
+    expect(
+      documentDisplayName(
+        `content://com.android.externalstorage.documents/document/primary%3ADownload%2FBackups%2F${NAME}`
+      )
+    ).toBe(NAME);
+  });
+
+  it('SAF documentId в корне тома (primary:file.zip)', () => {
+    expect(
+      documentDisplayName(
+        `content://com.android.externalstorage.documents/document/primary%3A${NAME}`
+      )
+    ).toBe(NAME);
+  });
+
+  it('обычный file:// URI', () => {
+    expect(documentDisplayName(`file:///data/user/0/app/files/CatTracker_backups/${NAME}`)).toBe(
+      NAME
+    );
+  });
+
+  it('имя без расширения (SAF мог не добавить .zip)', () => {
+    expect(
+      documentDisplayName(
+        `content://com.android.externalstorage.documents/document/primary%3ADownload%2FCatTracker-backup-2026-10-25_1432_app1.0.0_db2`
+      )
+    ).toBe('CatTracker-backup-2026-10-25_1432_app1.0.0_db2');
   });
 });
 

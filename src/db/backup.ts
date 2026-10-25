@@ -18,6 +18,7 @@ import {
   buildBackupFileName,
   checkBackupArchive,
   createBackupZip,
+  documentDisplayName,
   isBackupFileName,
   parseBackupFileName,
   readBackupZip,
@@ -95,11 +96,9 @@ function cleanupStaging(): void {
   }
 }
 
-/** Имя файла из URI (content://-URI может содержать префикс вида primary:). */
+/** Имя файла из URI (см. documentDisplayName — SAF documentId содержит путь). */
 function uriName(uri: string): string {
-  const last = decodeURIComponent(uri.split('/').pop() ?? '');
-  const colon = last.indexOf(':');
-  return colon >= 0 ? last.slice(colon + 1) : last;
+  return documentDisplayName(uri);
 }
 
 /* ---------- Список бэкапов ---------- */

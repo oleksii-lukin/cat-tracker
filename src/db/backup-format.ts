@@ -37,6 +37,20 @@ export function isBackupFileName(name: string): boolean {
   return name.startsWith(BACKUP_FILE_PREFIX);
 }
 
+/**
+ * Имя файла из URI.
+ * SAF documentId имеет вид `volume:path/to/file.ext` (путь — через `/`,
+ * поэтому берём сегмент после первого `:` и отрезаем директории);
+ * обычный file:// URI — просто последний сегмент пути.
+ */
+export function documentDisplayName(uri: string): string {
+  const last = decodeURIComponent(uri.split('/').pop() ?? '');
+  const colon = last.indexOf(':');
+  const withoutVolume = colon >= 0 ? last.slice(colon + 1) : last;
+  const slash = withoutVolume.lastIndexOf('/');
+  return slash >= 0 ? withoutVolume.slice(slash + 1) : withoutVolume;
+}
+
 const NAME_RE =
   /^CatTracker-backup-(\d{4}-\d{2}-\d{2})_(\d{4})_app([0-9A-Za-z.\-_]+)_db(\d+)(\.zip)?$/;
 
