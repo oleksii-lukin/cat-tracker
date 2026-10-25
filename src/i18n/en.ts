@@ -1,4 +1,6 @@
-export const en: typeof import('./ru').ru = {
+import type { Translation } from './types';
+
+export const en: Translation = {
   common: {
     save: 'Save',
     add: 'Add',

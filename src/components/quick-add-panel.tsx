@@ -24,6 +24,7 @@ import {
   type EventDraft,
 } from '@/domain/events';
 import { QUICK_ACTIONS_REGISTRY, getEnabledSorted } from '@/domain/quick-actions';
+import { eventLabel } from '@/i18n/event-label';
 import type { Cat, EventType, Feed } from '@/types/domain';
 import { dayKey, formatTime } from '@/utils/dates';
 import { uuid } from '@/utils/id';
@@ -182,7 +183,7 @@ export function QuickAddPanel({ cat, feeds, onMutated }: Props) {
                   marginTop: 2,
                 }}
               >
-                {t(eventDef.labelKey)}
+                {eventLabel(t, eventDef.labelKey, cat.sex)}
               </Text>
             </Pressable>
           );

@@ -1,4 +1,6 @@
-export const be: typeof import('./ru').ru = {
+import type { Translation } from './types';
+
+export const be: Translation = {
   common: {
     save: 'Захаваць',
     add: 'Дадаць',
@@ -27,9 +29,15 @@ export const be: typeof import('./ru').ru = {
     entries_other: 'запісу',
   },
   action: {
-    food: 'Паела',
-    pee: 'Папісала',
-    poop: 'Пакакала',
+    food: 'Паеў(ла)',
+    food_male: 'Паеў',
+    food_female: 'Паела',
+    pee: 'Папісаў(ла)',
+    pee_male: 'Папісаў',
+    pee_female: 'Папісала',
+    poop: 'Пакакаў(ла)',
+    poop_male: 'Пакакаў',
+    poop_female: 'Пакакала',
     hairball: 'Паста',
   },
   note: {

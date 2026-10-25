@@ -4,11 +4,14 @@ import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 
 import { getEventDef, hasField } from '@/domain/events';
-import type { DayEvent, Feed } from '@/types/domain';
+import { eventLabel } from '@/i18n/event-label';
+import type { DayEvent, Feed, Sex } from '@/types/domain';
 
 interface Props {
   event: DayEvent;
   feeds: Feed[];
+  /** Sex of the cat the event belongs to — selects the gendered label variant. */
+  sex: Sex;
   onPress: () => void;
   onRepeat: () => void;
 }
@@ -43,7 +46,7 @@ function eventDetails(event: DayEvent, feeds: Feed[], t: TFunction): string[] {
   return details;
 }
 
-export function EventCard({ event, feeds, onPress, onRepeat }: Props) {
+export function EventCard({ event, feeds, sex, onPress, onRepeat }: Props) {
   const { t } = useTranslation();
   const def = getEventDef(event.type);
   const details = eventDetails(event, feeds, t);
@@ -88,7 +91,7 @@ export function EventCard({ event, feeds, onPress, onRepeat }: Props) {
             numberOfLines={1}
             style={{ fontSize: 15, fontWeight: '700', color: '#1F1B15', flex: 1 }}
           >
-            {t(def.labelKey)}
+            {eventLabel(t, def.labelKey, sex)}
           </Text>
           <Text style={{ fontSize: 12, fontWeight: '700', color: '#56423C', flexShrink: 0 }}>
             {event.eventTime ?? '—'}
@@ -120,7 +123,7 @@ export function EventCard({ event, feeds, onPress, onRepeat }: Props) {
             }}
           >
             <Text style={{ fontSize: 11, fontWeight: '700', color: def.main }}>
-              {t(def.labelKey)}
+              {eventLabel(t, def.labelKey, sex)}
             </Text>
           </View>
           {event.isUncertain ? (

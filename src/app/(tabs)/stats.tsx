@@ -11,7 +11,8 @@ import { getCoat } from '@/constants/coats';
 import { getDaySummaries } from '@/db/repositories';
 import { useApp } from '@/context/app-context';
 import { ALL_EVENT_TYPES, getEventDef } from '@/domain/events';
-import type { DaySummary, FeedKind, PeeVolume, StoolQuality } from '@/types/domain';
+import { eventLabel } from '@/i18n/event-label';
+import type { DaySummary, FeedKind, PeeVolume, Sex, StoolQuality } from '@/types/domain';
 import { addDays, formatDay, todayKey, weekdayShort } from '@/utils/dates';
 
 const RANGES = [
@@ -88,7 +89,7 @@ export default function StatsScreen() {
   const feedKindLabel = (kind: FeedKind) =>
     kind === 'dry' ? t('stats.feedKindDry') : t('stats.feedKindWet');
 
-  const formatFood = (summary: DaySummary): string | null => {
+  const formatFood = (summary: DaySummary, sex: Sex): string | null => {
     if (summary.foodEvents === 0) return null;
     const parts = summary.foodByKind.map((b) => {
       const kindLabel = feedKindLabel(b.kind);
@@ -97,23 +98,23 @@ export default function StatsScreen() {
       }
       return `${kindLabel} ${t('stats.noVolume')}`;
     });
-    return `${t('action.food')}: ${parts.join(' · ')}`;
+    return `${eventLabel(t, 'action.food', sex)}: ${parts.join(' · ')}`;
   };
 
-  const formatPee = (summary: DaySummary): string | null => {
+  const formatPee = (summary: DaySummary, sex: Sex): string | null => {
     if (summary.peeCount === 0) return null;
     const volumes = summary.peeVolumes.length
       ? ` (${uniqueLabels<PeeVolume>(summary.peeVolumes, (v) => t(`pee.${v}`))})`
       : '';
-    return `${t('action.pee')} ${summary.peeCount} ${t('stats.times', { count: summary.peeCount })}${volumes}`;
+    return `${eventLabel(t, 'action.pee', sex)} ${summary.peeCount} ${t('stats.times', { count: summary.peeCount })}${volumes}`;
   };
 
-  const formatPoop = (summary: DaySummary): string | null => {
+  const formatPoop = (summary: DaySummary, sex: Sex): string | null => {
     if (summary.poopCount === 0) return null;
     const qualities = summary.poopQualities.length
       ? `: ${uniqueLabels<StoolQuality>(summary.poopQualities, (q) => t(`stool.${q}`))}`
       : '';
-    return `${t('action.poop')} ${summary.poopCount} ${t('stats.times', { count: summary.poopCount })}${qualities}`;
+    return `${eventLabel(t, 'action.poop', sex)} ${summary.poopCount} ${t('stats.times', { count: summary.poopCount })}${qualities}`;
   };
 
   // Generic types with a type-level amount (e.g. hairball paste in cm).
@@ -122,12 +123,12 @@ export default function StatsScreen() {
     (et) => et !== 'poop' && et !== 'pee' && et !== 'food'
   );
 
-  const formatGeneric = (summary: DaySummary, type: string): string | null => {
+  const formatGeneric = (summary: DaySummary, type: string, sex: Sex): string | null => {
     const count = summary.countsByType[type] ?? 0;
     if (count === 0) return null;
     const def = getEventDef(type);
     const amount = summary.amountsByType[type];
-    let line = `${t(def.labelKey)} ${count} ${t('stats.times', { count })}`;
+    let line = `${eventLabel(t, def.labelKey, sex)} ${count} ${t('stats.times', { count })}`;
     if (amount && amount.totalAmount > 0) {
       line += ` · ${amount.totalAmount} ${t(`units.${def.amountUnit ?? 'gram'}`)}`;
     }
@@ -147,6 +148,7 @@ export default function StatsScreen() {
   }
 
   const coat = getCoat(currentCat.color);
+  const catSex = currentCat.sex;
 
   return (
     <CoatFrame
@@ -195,10 +197,10 @@ export default function StatsScreen() {
           {days.map((day) => {
             const s = summaries[day] ?? EMPTY_SUMMARY;
             const isToday = day === todayKey();
-            const foodLine = formatFood(s);
-            const peeLine = formatPee(s);
-            const poopLine = formatPoop(s);
-            const genericLines = GENERIC_TYPES.map((type) => ({ type, line: formatGeneric(s, type) })).filter(
+            const foodLine = formatFood(s, catSex);
+            const peeLine = formatPee(s, catSex);
+            const poopLine = formatPoop(s, catSex);
+            const genericLines = GENERIC_TYPES.map((type) => ({ type, line: formatGeneric(s, type, catSex) })).filter(
               (x): x is { type: string; line: string } => x.line !== null
             );
             const isEmpty = !foodLine && !peeLine && !poopLine && genericLines.length === 0;

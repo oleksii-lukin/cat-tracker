@@ -1,4 +1,6 @@
-export const uk: typeof import('./ru').ru = {
+import type { Translation } from './types';
+
+export const uk: Translation = {
   common: {
     save: 'Зберегти',
     add: 'Додати',
@@ -27,9 +29,15 @@ export const uk: typeof import('./ru').ru = {
     entries_other: 'запису',
   },
   action: {
-    food: 'Поїла',
-    pee: 'Попісала',
-    poop: 'Покакала',
+    food: 'Поїв(ла)',
+    food_male: 'Поїв',
+    food_female: 'Поїла',
+    pee: 'Попісав(ла)',
+    pee_male: 'Попісав',
+    pee_female: 'Попісала',
+    poop: 'Покакав(ла)',
+    poop_male: 'Покакав',
+    poop_female: 'Покакала',
     hairball: 'Паста',
   },
   note: {

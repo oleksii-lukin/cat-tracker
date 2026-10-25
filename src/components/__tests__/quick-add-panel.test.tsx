@@ -17,6 +17,9 @@ const cat: Cat = {
   deletedAt: null,
 };
 
+const femaleCat: Cat = { ...cat, id: 'cat-2', name: 'Мурка', sex: 'female' };
+const unknownCat: Cat = { ...cat, id: 'cat-3', name: 'Барсик', sex: 'unknown' };
+
 const defaultQuickActions: QuickActionConfig[] = [
   { id: 'food', enabled: true, order: 0 },
   { id: 'pee', enabled: true, order: 1 },
@@ -32,8 +35,8 @@ jest.mock('@/context/app-context', () => ({
 jest.mock('@/components/time-pill', () => ({ TimePill: () => null }));
 jest.mock('@/utils/photo-picker', () => ({ pickPhoto: jest.fn() }));
 
-function renderPanel() {
-  return render(<QuickAddPanel cat={cat} feeds={[]} onMutated={() => {}} />);
+function renderPanel(c: Cat = cat) {
+  return render(<QuickAddPanel cat={c} feeds={[]} onMutated={() => {}} />);
 }
 
 describe('QuickAddPanel', () => {
@@ -47,6 +50,23 @@ describe('QuickAddPanel', () => {
     expect(getByTestId('quickadd-food')).toBeTruthy();
     expect(getByTestId('quickadd-pee')).toBeTruthy();
     expect(getByTestId('quickadd-poop')).toBeTruthy();
+  });
+
+  it('подписывает кнопки по полу кота', () => {
+    const male = renderPanel();
+    expect(male.getByText('Поел')).toBeTruthy();
+    expect(male.getByText('Пописял')).toBeTruthy();
+    expect(male.getByText('Покакал')).toBeTruthy();
+
+    const female = renderPanel(femaleCat);
+    expect(female.getByText('Поела')).toBeTruthy();
+    expect(female.getByText('Пописяла')).toBeTruthy();
+    expect(female.getByText('Покакала')).toBeTruthy();
+
+    const unknown = renderPanel(unknownCat);
+    expect(unknown.getByText('Поел(а)')).toBeTruthy();
+    expect(unknown.getByText('Пописял(а)')).toBeTruthy();
+    expect(unknown.getByText('Покакал(а)')).toBeTruthy();
   });
 
   it('не рендерит выключенные блоки', () => {

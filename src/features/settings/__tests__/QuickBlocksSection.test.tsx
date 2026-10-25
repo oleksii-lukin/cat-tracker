@@ -16,9 +16,9 @@ describe('QuickBlocksSection', () => {
       <QuickBlocksSection config={config} onToggle={() => {}} onMove={() => {}} />
     );
 
-    expect(getByText('Поела')).toBeTruthy();
-    expect(getByText('Пописяла')).toBeTruthy();
-    expect(getByText('Покакала')).toBeTruthy();
+    expect(getByText('Поел(а)')).toBeTruthy();
+    expect(getByText('Пописял(а)')).toBeTruthy();
+    expect(getByText('Покакал(а)')).toBeTruthy();
   });
 
   it('вызывает onToggle с id по переключению', () => {

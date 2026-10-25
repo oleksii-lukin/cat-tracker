@@ -16,19 +16,22 @@ import { EventFieldRenderer } from '@/components/event-fields';
 import { TimePill, type DateTimeValue } from '@/components/time-pill';
 import { savePhotoAsset } from '@/db/repositories';
 import { ALL_EVENT_TYPES, draftFromEvent, draftToFields, getEventDef, type EventDraft } from '@/domain/events';
-import type { DayEvent, EventType, Feed } from '@/types/domain';
+import { eventLabel } from '@/i18n/event-label';
+import type { DayEvent, EventType, Feed, Sex } from '@/types/domain';
 import { pickPhoto } from '@/utils/photo-picker';
 
 interface Props {
   event: DayEvent;
   feeds: Feed[];
   catColor: string;
+  /** Sex of the cat the event belongs to — selects the gendered label variant. */
+  sex: Sex;
   onSave: (patch: Partial<DayEvent> & { photoUri?: string | null }) => void;
   onDelete: () => void;
   onClose: () => void;
 }
 
-export function EventSheet({ event, feeds, catColor, onSave, onDelete, onClose }: Props) {
+export function EventSheet({ event, feeds, catColor, sex, onSave, onDelete, onClose }: Props) {
   const { t } = useTranslation();
   const [type, setType] = useState<EventType>(event.type);
   const [dateTime, setDateTime] = useState<DateTimeValue>({
@@ -111,7 +114,7 @@ export function EventSheet({ event, feeds, catColor, onSave, onDelete, onClose }
                   >
                     <Text style={{ fontSize: 16 }}>{etDef.emoji}</Text>
                     <Text style={{ fontSize: 11, fontWeight: '700', color: active ? etDef.main : '#56423C' }}>
-                      {t(etDef.labelKey)}
+                      {eventLabel(t, etDef.labelKey, sex)}
                     </Text>
                   </Pressable>
                 );
@@ -232,7 +235,7 @@ export function EventSheet({ event, feeds, catColor, onSave, onDelete, onClose }
             </View>
 
             <Text style={{ fontSize: 11, color: '#A49C93', marginTop: 10, textAlign: 'center' }}>
-              {t(def.labelKey)} · {dateTime.date}
+              {eventLabel(t, def.labelKey, sex)} · {dateTime.date}
             </Text>
           </ScrollView>
         </Pressable>

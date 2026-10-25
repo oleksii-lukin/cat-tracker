@@ -352,6 +352,7 @@ export function JournalFeed({ cat, feeds, revision, focusDay, onFocusDayHandled 
                   key={item.event.id}
                   event={item.event}
                   feeds={feeds}
+                  sex={cat.sex}
                   onPress={() => setEditing(item.event)}
                   onRepeat={() => handleRepeat(item.event)}
                 />
@@ -389,6 +390,7 @@ export function JournalFeed({ cat, feeds, revision, focusDay, onFocusDayHandled 
           event={editing}
           feeds={feeds}
           catColor={getCoat(cat.color).accent}
+          sex={cat.sex}
           onSave={handleSaveEdit}
           onDelete={handleDelete}
           onClose={() => setEditing(null)}

@@ -27,9 +27,15 @@ export const ru = {
     entries_other: 'записей',
   },
   action: {
-    food: 'Поела',
-    pee: 'Пописяла',
-    poop: 'Покакала',
+    food: 'Поел(а)',
+    food_male: 'Поел',
+    food_female: 'Поела',
+    pee: 'Пописял(а)',
+    pee_male: 'Пописял',
+    pee_female: 'Пописяла',
+    poop: 'Покакал(а)',
+    poop_male: 'Покакал',
+    poop_female: 'Покакала',
     hairball: 'Паста',
   },
   note: {

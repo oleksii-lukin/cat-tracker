@@ -126,16 +126,17 @@ name: '06 Cat switching'
 - extendedWaitUntil:
     visible: 'Нет записей'
     timeout: 10000
-- assertNotVisible: 'Поела:.*'
+- assertNotVisible: 'Поел.*'
 
 # У «Маркиза» есть кормление из шага 2 — заголовок и данные свои.
+# Пол «Маркиза» male → подпись с мужским родом «Поел:».
 - tapOn:
     id: 'cat-chip-Маркиз'
 - extendedWaitUntil:
     visible: 'Статистика · Маркиз'
     timeout: 10000
 - extendedWaitUntil:
-    visible: 'Поела:.*'
+    visible: 'Поел:.*'
     timeout: 10000
 
 # --- 5. Удаление текущего кота → фолбэк на cats[0] ---------------------------

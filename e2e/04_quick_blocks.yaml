@@ -24,7 +24,7 @@ name: '04 Quick blocks toggle'
     visible: 'Быстрые блоки'
     timeout: 10000
 
-# Выключаем блок «Поела».
+# Выключаем блок «Поел(а)».
 - tapOn:
     id: 'toggle-food'
 
