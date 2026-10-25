@@ -161,7 +161,8 @@ export function QuickAddPanel({ cat, feeds, onMutated }: Props) {
         sex={cat.sex}
         size="md"
         testIDPrefix="quickadd"
-        horizontalInset={16 * 2 + 14 * 2}
+        // margin 16×2 + padding 14×2 + borderWidth 1.5×2 (border-box)
+        horizontalInset={16 * 2 + 14 * 2 + 1.5 * 2}
       />
 
       {expanded && def ? (

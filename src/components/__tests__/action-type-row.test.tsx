@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render } from '@testing-library/react-native';
+import { fireEvent, render, within } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 
 import '@/i18n';
@@ -52,6 +52,7 @@ describe('ActionTypeRow', () => {
     const q = renderRow();
 
     expect(q.getByTestId('quickadd-row')).toBeTruthy();
+    expect(q.getByTestId('quickadd-line-0')).toBeTruthy();
     expect(q.getByTestId('quickadd-food')).toBeTruthy();
     expect(q.getByTestId('quickadd-pee')).toBeTruthy();
     expect(q.getByTestId('quickadd-poop')).toBeTruthy();
@@ -87,40 +88,64 @@ describe('ActionTypeRow', () => {
     expect(active.borderColor).toBe('#D9933D');
   });
 
-  it('в состоянии по умолчанию складывает иконку над подписью', () => {
+  it('делит ширину линии через flex:1 без заранее заданных ширин', () => {
     const q = renderRow();
+    const line = StyleSheet.flatten(q.getByTestId('quickadd-line-0').props.style);
 
+    expect(line.flexDirection).toBe('row');
+    expect(buttonStyle(q, 'food').flex).toBe(1);
+    expect(buttonStyle(q, 'food').flexBasis).toBeUndefined();
+    // Одна линия со всеми четырьмя кнопками: иконка над подписью.
     expect(buttonStyle(q, 'food').flexDirection).toBeUndefined();
     expect(buttonStyle(q, 'food').minHeight).toBeUndefined();
+    expect(q.queryByTestId('quickadd-line-1')).toBeNull();
   });
 
-  it('переводит кнопки в горизонтальную раскладку, когда ряд не влезает', () => {
+  it('раскладывает узкий ряд в две линии по две кнопки', () => {
     const q = renderRow();
     fireEvent(q.getByTestId('quickadd-row'), 'layout', {
       nativeEvent: { layout: { width: 250, height: 40, x: 0, y: 0 } },
     });
 
+    const firstLine = within(q.getByTestId('quickadd-line-0'));
+    const secondLine = within(q.getByTestId('quickadd-line-1'));
+    expect(firstLine.getByTestId('quickadd-food')).toBeTruthy();
+    expect(firstLine.getByTestId('quickadd-pee')).toBeTruthy();
+    expect(secondLine.getByTestId('quickadd-poop')).toBeTruthy();
+    expect(secondLine.getByTestId('quickadd-hairball')).toBeTruthy();
+
+    // В две линии кнопки переключаются в горизонтальную раскладку.
     const food = buttonStyle(q, 'food');
     expect(food.flexDirection).toBe('row');
     expect(food.minHeight).toBe(48);
     expect(food.justifyContent).toBe('center');
-    // 2 колонки: по 121dp на кнопку при ряде 250dp и зазоре 8dp.
-    expect(food.flexBasis).toBe(121);
-    // Подпись в строке не должна растягивать кнопку.
     expect(
       StyleSheet.flatten(q.getByText('Покакал(а)').props.style).marginTop
     ).toBe(0);
   });
 
-  it('возвращает колоночную раскладку после расширения ряда', () => {
+  it('округляет ширину вниз: дробная ширина не раздувает колонки', () => {
+    const q = renderRow();
+    // 279.6: при floor получается 279 (63.75dp на кнопку < 64 → 2 колонки),
+    // при round было бы 280 (ровно 64 → 4 колонки).
+    fireEvent(q.getByTestId('quickadd-row'), 'layout', {
+      nativeEvent: { layout: { width: 279.6, height: 40, x: 0, y: 0 } },
+    });
+
+    expect(q.getByTestId('quickadd-line-1')).toBeTruthy();
+  });
+
+  it('возвращает одну линию после расширения ряда', () => {
     const q = renderRow();
     fireEvent(q.getByTestId('quickadd-row'), 'layout', {
       nativeEvent: { layout: { width: 700, height: 40, x: 0, y: 0 } },
     });
 
-    const food = buttonStyle(q, 'food');
-    expect(food.flexDirection).toBeUndefined();
-    expect(food.minHeight).toBeUndefined();
+    const line = within(q.getByTestId('quickadd-line-0'));
+    expect(line.getByTestId('quickadd-hairball')).toBeTruthy();
+    expect(q.queryByTestId('quickadd-line-1')).toBeNull();
+    expect(buttonStyle(q, 'food').flexDirection).toBeUndefined();
+    expect(buttonStyle(q, 'food').minHeight).toBeUndefined();
   });
 
   it('ничего не рендерит без включённых типов', () => {
