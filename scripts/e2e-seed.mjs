@@ -148,7 +148,7 @@ function seedWeekHistory(db) {
   // Маркиз: только вчера и сегодня — в «Неделе» его дни заметно короче, чем у Тести.
   insertEvent(db, { catId: CAT_MARQUIS.id, type: 'food', date: daysAgo(1), time: '07:45', feedId: SEED_FEED_DRY, amount: 120 });
   insertEvent(db, { catId: CAT_MARQUIS.id, type: 'poop', date: daysAgo(1), time: '20:15', stoolQuality: 'normal' });
-  insertEvent(db, { catId: CAT_MARQUIS.id, type: 'pee', date: daysAgo(0), time: '11:20', peeVolume: 'small' });
+  insertEvent(db, { catId: CAT_MARQUIS.id, type: 'pee', date: daysAgo(0), time: '11:20', peeVolume: 'low' });
   insertWeight(db, { catId: CAT_MARQUIS.id, grams: 5200, on: daysAgo(1) });
 }
 
