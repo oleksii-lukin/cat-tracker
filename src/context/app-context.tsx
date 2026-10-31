@@ -3,6 +3,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { AppState } from 'react-native';
 
 import { listCats, listFeeds, getMeta, setMeta, deleteMeta, localizePresetFeeds } from '@/db/repositories';
+import { useTodayKey } from '@/hooks/use-today';
 import {
   DEFAULT_QUICK_ACTIONS,
   loadQuickActions,
@@ -22,6 +23,8 @@ interface AppContextValue {
   currentCat: Cat | null;
   currentCatId: string | null;
   setCurrentCatId: (id: string) => void;
+  /** Ключ суток (dayKey): обновляется при возврате из фона и по наступлении полуночи. */
+  today: string;
   focusDay: string | null;
   setFocusDay: (day: string | null) => void;
   refreshCats: () => Promise<void>;
@@ -63,6 +66,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [db]);
 
   const bumpRevision = useCallback(() => setRevision((r) => r + 1), []);
+
+  // Метки «Сегодня/Вчера» и окна дней в ленте/статистике живут вне React-состояния,
+  // поэтому смена суток приходит отсюда. Возврат из фона дольше минуты дополнительно
+  // перечитывает данные — пусть даже локальные, БД на это готова.
+  const today = useTodayKey({ onLongResume: bumpRevision });
 
   const applyLanguage = useCallback(
     async (pref: LanguagePref) => {
@@ -162,6 +170,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       currentCat,
       currentCatId: currentCat?.id ?? null,
       setCurrentCatId,
+      today,
       focusDay,
       setFocusDay,
       refreshCats,
@@ -179,6 +188,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       cats,
       feeds,
       currentCat,
+      today,
       focusDay,
       setFocusDay,
       refreshCats,

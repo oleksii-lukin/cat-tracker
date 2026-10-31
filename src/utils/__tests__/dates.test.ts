@@ -122,6 +122,13 @@ describe('относительные и форматированные метк�
     expect(relativeDayLabel(addDays(today, -1))).toBe('Вчера');
   });
 
+  it('relativeDayLabel: метка следует переданному «сегодня», а не системным часам', () => {
+    // 2020-03-01 — воскресенье; далёкая дата, чтобы не зависеть от реальных суток теста.
+    expect(relativeDayLabel('2020-03-02', '2020-03-02')).toBe('Сегодня');
+    expect(relativeDayLabel('2020-03-01', '2020-03-02')).toBe('Вчера');
+    expect(relativeDayLabel('2020-03-01', '2020-03-03')).toBe('Воскресенье, 1 марта');
+  });
+
   it('relativeDayLabel: прошлая дата —weekday + дата', () => {
     // 2026-01-05 — понедельник
     const label = relativeDayLabel('2026-01-05');

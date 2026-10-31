@@ -27,12 +27,14 @@ import {
   updateNote,
 } from '@/db/repositories';
 import type { Cat, DayEvent, Feed, Note } from '@/types/domain';
-import { addDays, dayKey, relativeDayLabel, todayKey } from '@/utils/dates';
+import { addDays, dayKey, relativeDayLabel } from '@/utils/dates';
 
 interface Props {
   cat: Cat;
   feeds: Feed[];
   revision: number;
+  /** Ключ суток из AppContext: смена суток пересобирает окно ленты и заголовки «Сегодня». */
+  today: string;
   focusDay: string | null;
   onFocusDayHandled: () => void;
 }
@@ -113,7 +115,7 @@ function NoteCard({ note, onPress }: { note: Note; onPress: () => void }) {
   );
 }
 
-export function JournalFeed({ cat, feeds, revision, focusDay, onFocusDayHandled }: Props) {
+export function JournalFeed({ cat, feeds, revision, today, focusDay, onFocusDayHandled }: Props) {
   const { t } = useTranslation();
   const db = useSQLiteContext();
   const [groups, setGroups] = useState<DayGroup[]>([]);
@@ -163,7 +165,6 @@ export function JournalFeed({ cat, feeds, revision, focusDay, onFocusDayHandled 
   );
 
   useEffect(() => {
-    const today = todayKey();
     const toDay = today;
     let from = addDays(today, -(PAGE_DAYS - 1));
     if (focusDay && focusDay < from) {
@@ -173,13 +174,12 @@ export function JournalFeed({ cat, feeds, revision, focusDay, onFocusDayHandled 
       await loadWindow(from, toDay, false);
     })();
     if (focusDay) onFocusDayHandled();
-  }, [cat.id, revision, loadWindow, focusDay, onFocusDayHandled]);
+  }, [cat.id, revision, today, loadWindow, focusDay, onFocusDayHandled]);
 
   const refresh = useCallback(() => {
-    const today = todayKey();
     const from = addDays(today, -(PAGE_DAYS - 1));
     loadWindow(from, today, false);
-  }, [loadWindow]);
+  }, [loadWindow, today]);
 
   const loadEarlier = useCallback(() => {
     if (!nextFromDay || loading) return;
@@ -319,9 +319,9 @@ export function JournalFeed({ cat, feeds, revision, focusDay, onFocusDayHandled 
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <Text style={{ fontSize: 16, fontWeight: '700', color: '#1F1B15' }}>
-                  {relativeDayLabel(group.day)}
+                  {relativeDayLabel(group.day, today)}
                 </Text>
-                {group.day === todayKey() ? (
+                {group.day === today ? (
                   <View
                     style={{
                       width: 8,

@@ -16,7 +16,7 @@ import { hasAnyEvents } from '@/features/stats/filter';
 import { useStatsFilter } from '@/features/stats/useStatsFilter';
 import { eventLabel } from '@/i18n/event-label';
 import type { DaySummary, EventType, FeedKind, PeeVolume, Sex, StoolQuality } from '@/types/domain';
-import { addDays, formatDay, todayKey, weekdayShort } from '@/utils/dates';
+import { addDays, formatDay, weekdayShort } from '@/utils/dates';
 
 const RANGES = [
   { key: 'week', labelKey: 'stats.rangeWeek', days: 7 },
@@ -59,6 +59,7 @@ export default function StatsScreen() {
     setCurrentCatId,
     setFocusDay,
     revision,
+    today,
     quickActions,
   } = useApp();
   const [rangeKey, setRangeKey] = useState<RangeKey>('week');
@@ -72,10 +73,9 @@ export default function StatsScreen() {
   const loadedCatId = useRef<string | null>(null);
 
   const days = useMemo(() => {
-    const today = todayKey();
     const n = RANGES.find((r) => r.key === rangeKey)?.days ?? 7;
     return Array.from({ length: n }, (_, i) => addDays(today, -i));
-  }, [rangeKey]);
+  }, [rangeKey, today]);
 
   const load = useCallback(async () => {
     if (!currentCat) return;
@@ -248,7 +248,7 @@ export default function StatsScreen() {
         <View style={{ flexDirection: 'column', gap: 8 }}>
           {days.map((day) => {
             const s = summaries[day] ?? EMPTY_SUMMARY;
-            const isToday = day === todayKey();
+            const isToday = day === today;
             const foodLine = filter.enabled.has('food') ? formatFood(s, catSex) : null;
             const peeLine = filter.enabled.has('pee') ? formatPee(s, catSex) : null;
             const poopLine = filter.enabled.has('poop') ? formatPoop(s, catSex) : null;

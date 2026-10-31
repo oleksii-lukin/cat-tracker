@@ -39,8 +39,12 @@ export function weekdayShort(day: string): string {
   return capitalize(formatDate(day, { weekday: 'short' }));
 }
 
-export function relativeDayLabel(day: string): string {
-  const today = todayKey();
+/**
+ * Метка дня для заголовков: «Сегодня», «Вчера», иначе «Понедельник, 5 января».
+ * `today` передаётся снаружи, чтобы метка обновлялась вместе с состоянием суток,
+ * а не только при перерисовке от других причин.
+ */
+export function relativeDayLabel(day: string, today: string = todayKey()): string {
   if (day === today) return i18n.t('date.today');
   if (day === addDays(today, -1)) return i18n.t('date.yesterday');
   const weekday = capitalize(formatDate(day, { weekday: 'long' }));

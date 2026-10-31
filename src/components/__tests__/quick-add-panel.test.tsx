@@ -1,10 +1,11 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { act, render } from '@testing-library/react-native';
 
 import '@/i18n';
 import { QuickAddPanel } from '@/components/quick-add-panel';
 import type { QuickActionConfig } from '@/domain/quick-actions';
 import type { Cat } from '@/types/domain';
+import type { DateTimeValue } from '@/components/time-pill';
 
 const cat: Cat = {
   id: 'cat-1',
@@ -27,12 +28,22 @@ const defaultQuickActions: QuickActionConfig[] = [
 ];
 
 let mockQuickActions: QuickActionConfig[] = defaultQuickActions;
+let mockToday = '2026-10-31';
+let mockOnChange: ((value: DateTimeValue) => void) | null = null;
+let mockPillValue: DateTimeValue | null = null;
 
 jest.mock('expo-sqlite', () => ({ useSQLiteContext: () => ({}) }));
 jest.mock('@/context/app-context', () => ({
-  useApp: () => ({ quickActions: mockQuickActions }),
+  useApp: () => ({ quickActions: mockQuickActions, today: mockToday }),
 }));
-jest.mock('@/components/time-pill', () => ({ TimePill: () => null }));
+jest.mock('@/components/time-pill', () => ({
+  // Пилюля не рендерится, но её текущее значение и onChange доступны для проверки.
+  TimePill: ({ value, onChange }: { value: DateTimeValue; onChange: (value: DateTimeValue) => void }) => {
+    mockPillValue = value;
+    mockOnChange = onChange;
+    return null;
+  },
+}));
 jest.mock('@/utils/photo-picker', () => ({ pickPhoto: jest.fn() }));
 
 function renderPanel(c: Cat = cat) {
@@ -42,6 +53,9 @@ function renderPanel(c: Cat = cat) {
 describe('QuickAddPanel', () => {
   beforeEach(() => {
     mockQuickActions = defaultQuickActions.map((c) => ({ ...c }));
+    mockToday = '2026-10-31';
+    mockOnChange = null;
+    mockPillValue = null;
   });
 
   it('рендерит кнопки всех включённых блоков', () => {
@@ -90,5 +104,28 @@ describe('QuickAddPanel', () => {
     const { getByTestId } = renderPanel();
 
     expect(getByTestId('quickadd-poop')).toBeTruthy();
+  });
+
+  it('смена суток переезжает нетронутый «сейчас» на новый день', () => {
+    const { rerender } = renderPanel();
+
+    expect(mockPillValue?.date).toBe('2026-10-31');
+
+    mockToday = '2026-11-01';
+    rerender(<QuickAddPanel cat={cat} feeds={[]} onMutated={() => {}} />);
+
+    expect(mockPillValue?.date).toBe('2026-11-01');
+  });
+
+  it('ручной выбор даты переживает смену суток', () => {
+    const { rerender } = renderPanel();
+
+    act(() => mockOnChange?.({ date: '2026-11-05', time: '09:00' }));
+    expect(mockPillValue).toEqual({ date: '2026-11-05', time: '09:00' });
+
+    mockToday = '2026-11-01';
+    rerender(<QuickAddPanel cat={cat} feeds={[]} onMutated={() => {}} />);
+
+    expect(mockPillValue).toEqual({ date: '2026-11-05', time: '09:00' });
   });
 });

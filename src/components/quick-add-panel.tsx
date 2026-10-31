@@ -1,5 +1,5 @@
 import { useSQLiteContext } from 'expo-sqlite';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Image,
   Pressable,
@@ -39,7 +39,7 @@ interface Props {
 export function QuickAddPanel({ cat, feeds, onMutated }: Props) {
   const { t } = useTranslation();
   const db = useSQLiteContext();
-  const { quickActions } = useApp();
+  const { quickActions, today } = useApp();
   const enabledQuickActions = useMemo(
     () => getEnabledSorted(QUICK_ACTIONS_REGISTRY, quickActions),
     [quickActions]
@@ -49,6 +49,12 @@ export function QuickAddPanel({ cat, feeds, onMutated }: Props) {
     const now = new Date();
     return { date: dayKey(now), time: formatTime(now) };
   });
+  // true, если пользователь сам тронул дату/время: ручной выбор переживает смену суток.
+  const dateTimeTouched = useRef(false);
+  const changeDateTime = (next: DateTimeValue) => {
+    dateTimeTouched.current = true;
+    setDateTime(next);
+  };
   const [draft, setDraft] = useState<EventDraft>(DEFAULT_DRAFT);
   const [uncertain, setUncertain] = useState(false);
   const [comment, setComment] = useState('');
@@ -64,9 +70,20 @@ export function QuickAddPanel({ cat, feeds, onMutated }: Props) {
     setUncertain(false);
     setComment('');
     setPhotoUri(null);
+    dateTimeTouched.current = false;
     const now = new Date();
     setDateTime({ date: dayKey(now), time: formatTime(now) });
   };
+
+  // Смена суток, пока приложение лежало в фоне: пилюля «сейчас» переезжает
+  // на новый день и текущее время, но только если пользователь её не менял.
+  const prevToday = useRef(today);
+  useEffect(() => {
+    if (prevToday.current === today) return;
+    prevToday.current = today;
+    if (dateTimeTouched.current) return;
+    setDateTime({ date: today, time: formatTime(new Date()) });
+  }, [today]);
 
   const toggleExpanded = (next: EventType) => {
     setExpanded((prev) => {
@@ -151,7 +168,7 @@ export function QuickAddPanel({ cat, feeds, onMutated }: Props) {
           <CatAvatar coat={coat} name={cat.name} size={28} />
           <Text style={{ fontSize: 15, fontWeight: '700', color: '#1F1B15' }}>{t('quickAdd.title')}</Text>
         </View>
-        <TimePill value={dateTime} onChange={setDateTime} catColor={coat.accent} />
+        <TimePill value={dateTime} onChange={changeDateTime} catColor={coat.accent} />
       </View>
 
       <ActionTypeRow

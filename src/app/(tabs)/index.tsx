@@ -22,6 +22,7 @@ export default function JournalScreen() {
     setFocusDay,
     bumpRevision,
     revision,
+    today,
   } = useApp();
 
   const onFocusDayHandled = useCallback(() => setFocusDay(null), [setFocusDay]);
@@ -61,6 +62,7 @@ export default function JournalScreen() {
           cat={currentCat}
           feeds={feeds}
           revision={revision}
+          today={today}
           focusDay={focusDay}
           onFocusDayHandled={onFocusDayHandled}
         />
