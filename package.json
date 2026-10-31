@@ -10,6 +10,7 @@
     "@legendapp/motion": "^2.5.3",
     "expo": "~57.0.31",
     "expo-application": "~57.0.3",
+    "expo-build-properties": "~57.0.22",
     "expo-constants": "~57.0.20",
     "expo-dev-client": "~57.0.20",
     "expo-device": "~57.0.2",

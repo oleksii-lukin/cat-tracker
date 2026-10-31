@@ -33,6 +33,8 @@ npx expo start     # dev-сервер
 eas build          # сборка в облаке (EAS)
 ```
 
+Android-релиз собирается с R8 (минификация + обфускация) — флаги в `app.json` (`expo-build-properties`) и `plugins/withAndroidR8OptimizePreset.js`. При обновлении на Expo SDK 58 этот плагин удалить — шаблон включает всё сам; подробности в `AGENTS.md`, раздел «Android release (R8 / DEX optimization)».
+
 ## Тестирование
 
 Два уровня: юнит-тесты (Jest, бегут локально в Node) и e2e-тесты (Maestro, на Android-эмуляторе).
